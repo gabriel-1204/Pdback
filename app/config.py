@@ -1,0 +1,25 @@
+from pydantic_settings import BaseSettings
+
+
+class Settings(BaseSettings):
+    # Gemini API
+    GEMINI_API_KEY: str = ""
+
+    # MongoDB
+    MONGODB_URL: str = "mongodb://localhost:27017"
+    MONGODB_DB_NAME: str = "pdback"
+
+    # CORS
+    CORS_ORIGINS: str = "http://localhost:5500"
+
+    # App
+    DEBUG: bool = True
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+
+
+settings = Settings()
