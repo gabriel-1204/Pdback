@@ -39,6 +39,24 @@ docker compose up --build
 
 - http://localhost:8000/docs
 
+## 린터 (Ruff)
+
+코드 품질 유지를 위해 [Ruff](https://docs.astral.sh/ruff/)를 사용합니다. 설정은 `pyproject.toml`에 정의되어 있습니다.
+
+```bash
+# 설치
+pip install ruff
+
+# 린트 검사
+ruff check app/
+
+# 자동 수정
+ruff check app/ --fix
+
+# 코드 포맷팅
+ruff format app/
+```
+
 ## 프로젝트 구조
 
 ```
