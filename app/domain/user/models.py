@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserDocument(BaseModel):
@@ -16,8 +16,9 @@ class UserDocument(BaseModel):
     is_active: bool = True
 
     # 로그 및 기록
-    created_at: datetime = datetime.now()
-    updated_at: datetime = datetime.now()
+    # datetime.now()는 모듈 로드 시 1회만 평가되어 값이 고정되는 버그 → default_factory로 수정
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
     last_login: datetime | None = None
 
     # AI 면접 관련
