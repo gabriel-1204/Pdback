@@ -67,32 +67,31 @@ app/                             # 백엔드 (FastAPI)
 ├── api/v1/
 │   └── router.py                # API 라우터 통합
 ├── domain/
-│   ├── user/
-│   │   └── models.py            # 유저 문서 스키마
-│   ├── interview/
-│   │   ├── models.py            # 면접 문서 스키마
-│   │   ├── schema.py            # 요청/응답 DTO
-│   │   ├── router.py            # 면접 API 엔드포인트
-│   │   ├── service.py           # 비즈니스 로직
-│   │   └── prompt.py            # Gemini 프롬프트 템플릿
-│   └── feedback/
-│       ├── models.py            # 피드백 문서 스키마
-│       ├── schema.py            # 요청/응답 DTO
-│       ├── router.py            # 피드백 API 엔드포인트
-│       └── service.py           # 비즈니스 로직
+│   ├── user/                    # 김유선
+│   │   └── models.py                # 유저 문서 스키마
+│   ├── interview/               # 이영진
+│   │   ├── models.py                # 면접 문서 스키마
+│   │   ├── schema.py                # 요청/응답 DTO
+│   │   ├── router.py                # 면접 API 엔드포인트
+│   │   ├── service.py               # 비즈니스 로직
+│   │   └── prompt.py                # Gemini 프롬프트 템플릿 (김평일)
+│   └── feedback/                # 박지영
+│       ├── models.py                # 피드백 문서 스키마
+│       ├── schema.py                # 요청/응답 DTO
+│       ├── router.py                # 피드백 API 엔드포인트
+│       └── service.py               # 비즈니스 로직
 └── services/
-    └── gemini.py                # Gemini API 클라이언트
-
+    └── gemini.py                    # Gemini API 클라이언트 (김평일)
 frontend/                        # 프론트엔드 (HTML/CSS/JS)
 ├── index.html                   # 랜딩 페이지
 ├── css/
 │   └── common.css               # 공통 스타일
 └── pages/
-    ├── login.html               # 로그인
-    ├── register.html            # 회원가입
-    ├── mypage.html              # 마이페이지
-    ├── interview-setup.html     # 면접 설정
-    ├── interview.html           # 면접 진행
-    ├── feedback.html            # 피드백 결과
-    └── history.html             # 면접 히스토리
+    ├── login.html               # 로그인 (김유선)
+    ├── register.html            # 회원가입 (김유선)
+    ├── mypage.html              # 마이페이지 (김유선)
+    ├── interview-setup.html     # 면접 설정 (김평일)
+    ├── interview.html           # 면접 진행 (이영진)
+    ├── feedback.html            # 피드백 결과 (박지영)
+    └── history.html             # 면접 히스토리 (박지영)
 ```
