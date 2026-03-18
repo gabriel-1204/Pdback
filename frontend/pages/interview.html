@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>면접 진행 - P:dback</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-logo">P:dback</a>
+  <div class="nav-links">
+    <a href="interview-setup.html" class="active">면접 시작</a>
+    <a href="history.html">히스토리</a>
+    <a href="mypage.html">마이페이지</a>
+    <a href="login.html">로그인</a>
+  </div>
+</nav>
+
+<div class="page-container">
+  <div class="page-content" style="padding: 24px;">
+    <div class="interview-layout">
+      <!-- 웹캠 영역 -->
+      <div class="webcam-area">
+        <div class="webcam-status">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="status-dot green"></span>
+            <span class="status-label">카메라 ON</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="status-dot blue"></span>
+            <span class="status-label">STT ON</span>
+          </div>
+        </div>
+        <div class="timer-badge">⏱ 00:00</div>
+        <div class="webcam-placeholder">👤</div>
+        <div style="font-size:14px;opacity:0.6;">웹캠 미리보기</div>
+        <div class="attitude-bar">
+          <div class="attitude-bar-title">실시간 태도 분석 (MediaPipe)</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+            <span>시선 정면 주시율</span>
+            <span>--%</span>
+          </div>
+          <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin:6px 0 4px;">
+            <span>자세 안정도</span>
+            <span>--%</span>
+          </div>
+          <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- 채팅 패널 -->
+      <div class="chat-panel">
+        <div class="chat-header">
+          💬 면접 진행 <span style="font-size:12px;color:#999;font-weight:400;">질문 0/0</span>
+        </div>
+        <div class="chat-messages">
+          <!-- 면접 시작 시 AI 질문이 여기에 추가됩니다 -->
+        </div>
+        <div class="chat-input-area">
+          <div class="stt-indicator">
+            <div class="stt-wave">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            음성 인식 대기 중...
+          </div>
+          <button class="btn-danger" style="white-space:nowrap;padding:10px 16px;font-size:13px;">종료</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마이페이지 - P:dback</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-logo">P:dback</a>
+  <div class="nav-links">
+    <a href="interview-setup.html">면접 시작</a>
+    <a href="history.html">히스토리</a>
+    <a href="mypage.html" class="active">마이페이지</a>
+    <a href="login.html">로그아웃</a>
+  </div>
+</nav>
+
+<div class="page-container">
+  <div class="page-content">
+    <div class="profile-layout">
+      <div class="profile-card">
+        <div class="profile-avatar">👤</div>
+        <div class="profile-name">--</div>
+        <div class="profile-email">--</div>
+        <div class="profile-stats">
+          <div class="stat-item">
+            <div class="stat-value">-</div>
+            <div class="stat-label">총 면접 횟수</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">-</div>
+            <div class="stat-label">평균 점수</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">-</div>
+            <div class="stat-label">최고 점수</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">-</div>
+            <div class="stat-label">이번 주</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-form">
+        <h3>프로필 수정</h3>
+        <form id="profile-form">
+          <div class="input-group">
+            <label>이름</label>
+            <input type="text" placeholder="이름">
+          </div>
+          <div class="input-group">
+            <label>이메일</label>
+            <input type="email" placeholder="이메일" disabled style="color:#bbb;">
+          </div>
+          <div class="input-group">
+            <label>현재 비밀번호</label>
+            <input type="password" placeholder="현재 비밀번호">
+          </div>
+          <div class="input-group">
+            <label>새 비밀번호</label>
+            <input type="password" placeholder="새 비밀번호 입력">
+          </div>
+          <div class="input-group">
+            <label>새 비밀번호 확인</label>
+            <input type="password" placeholder="새 비밀번호 확인">
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;">
+            <button type="submit" class="btn-primary" style="width:auto;padding:10px 32px;">저장</button>
+            <button type="button" class="btn-secondary">취소</button>
+          </div>
+        </form>
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn-danger" style="font-size:13px;padding:8px 16px;">회원 탈퇴</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

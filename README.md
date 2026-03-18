@@ -60,14 +60,39 @@ ruff format app/
 ## 프로젝트 구조
 
 ```
-app/
-├── main.py          # FastAPI 앱 진입점
-├── config.py        # 환경변수 설정
-├── database.py      # MongoDB 연결 관리
-├── api/v1/          # API 라우터
+app/                             # 백엔드 (FastAPI)
+├── main.py                      # FastAPI 앱 진입점
+├── config.py                    # 환경변수 설정
+├── database.py                  # MongoDB 연결 관리
+├── api/v1/
+│   └── router.py                # API 라우터 통합
 ├── domain/
-│   ├── interview/   # 면접 세션 도메인
-│   └── feedback/    # 피드백 도메인
+│   ├── user/
+│   │   └── models.py            # 유저 문서 스키마
+│   ├── interview/
+│   │   ├── models.py            # 면접 문서 스키마
+│   │   ├── schema.py            # 요청/응답 DTO
+│   │   ├── router.py            # 면접 API 엔드포인트
+│   │   ├── service.py           # 비즈니스 로직
+│   │   └── prompt.py            # Gemini 프롬프트 템플릿
+│   └── feedback/
+│       ├── models.py            # 피드백 문서 스키마
+│       ├── schema.py            # 요청/응답 DTO
+│       ├── router.py            # 피드백 API 엔드포인트
+│       └── service.py           # 비즈니스 로직
 └── services/
-    └── gemini.py    # Gemini API 클라이언트
+    └── gemini.py                # Gemini API 클라이언트
+
+frontend/                        # 프론트엔드 (HTML/CSS/JS)
+├── index.html                   # 랜딩 페이지
+├── css/
+│   └── common.css               # 공통 스타일
+└── pages/
+    ├── login.html               # 로그인
+    ├── register.html            # 회원가입
+    ├── mypage.html              # 마이페이지
+    ├── interview-setup.html     # 면접 설정
+    ├── interview.html           # 면접 진행
+    ├── feedback.html            # 피드백 결과
+    └── history.html             # 면접 히스토리
 ```

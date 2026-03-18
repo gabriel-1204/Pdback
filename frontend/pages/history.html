@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>면접 히스토리 - P:dback</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-logo">P:dback</a>
+  <div class="nav-links">
+    <a href="interview-setup.html">면접 시작</a>
+    <a href="history.html" class="active">히스토리</a>
+    <a href="mypage.html">마이페이지</a>
+    <a href="login.html">로그인</a>
+  </div>
+</nav>
+
+<div class="page-container">
+  <div class="page-content">
+    <h2 style="font-size:20px;margin-bottom:8px;">면접 히스토리</h2>
+    <p class="text-muted" style="margin-bottom:20px;">과거 면접 기록과 점수 추이를 확인하세요</p>
+
+    <!-- 점수 추이 차트 -->
+    <div style="background:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #eee;">
+      <h3 style="font-size:14px;margin-bottom:16px;">점수 추이</h3>
+      <div id="trend-chart" style="height:160px;display:flex;align-items:center;justify-content:center;color:#999;font-size:14px;">
+        면접 기록이 없습니다
+      </div>
+    </div>
+
+    <!-- 면접 목록 -->
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>날짜</th>
+          <th>직무</th>
+          <th>기술 스택</th>
+          <th>기술</th>
+          <th>논리</th>
+          <th>태도</th>
+          <th>평균</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="history-body">
+        <!-- API 응답으로 채워집니다 -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

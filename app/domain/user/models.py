@@ -16,14 +16,14 @@ class UserDocument(BaseModel):
     is_active: bool = True
 
     # 로그 및 기록
-    # datetime.now()는 모듈 로드 시 1회만 평가되어 값이 고정되는 버그 → default_factory로 수정
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     last_login: datetime | None = None
 
-    # AI 면접 관련
+    # 마이페이지 통계
     interview_count: int = 0
-    position: str | None = None
+    average_score: float = 0.0
+    max_score: float = 0.0
 
     # 보안 (JWT)
     refresh_token: str | None = None
