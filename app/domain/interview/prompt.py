@@ -50,3 +50,19 @@ def build_system_prompt(
 def get_first_question_prompt() -> str:
     """첫 면접 질문 요청 프롬프트를 반환합니다."""
     return "면접을 시작하겠습니다. 첫 번째 질문을 해주세요."
+
+# 꼬리물기 질문 프롬포트 / 파라미터2개 필요 (question, answer)
+def get_followup_prompt(
+    question: str,  # 직전 면접 질문
+    answer: str,    # 사용자의 답변
+) -> str:
+    """꼬리 질문 생성용 프롬프트를 반환합니다."""
+    # 직전 질문과 답변을 같이 넘겨야 Gemini가 맥락 파악해서 꼬리질문 생성 가능
+    return f"""
+지원자가 아래와 같이 답변했습니다.
+
+질문: {question}
+답변: {answer}
+
+위 답변을 분석해서 꼬리 질문 1개를 해주세요.
+""".strip()
