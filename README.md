@@ -100,6 +100,30 @@ frontend/                        # 프론트엔드 (HTML/CSS/JS)
 
 ## Git 작업 가이드
 
+### 0. Git 명령어 기본 용어
+
+| 용어 | 의미 | 예시 |
+|------|------|------|
+| `origin` | GitHub 원격 저장소의 별명 | `origin` = `https://github.com/gabriel-1204/Pdback.git` |
+| `feature/infra` | 내 컴퓨터(로컬)의 브랜치 | `git checkout feature/infra` → 로컬 브랜치 이동 |
+| `origin/main` | GitHub(원격)의 main 브랜치 | `git merge origin/main` → GitHub의 main 코드를 가져와 합치기 |
+
+**origin을 붙이는 기준:**
+- **내 컴퓨터에서 이동**할 때 → origin 안 붙임 (`git checkout feature/infra`)
+- **GitHub의 코드를 참조**할 때 → origin 붙임 (`git merge origin/main`, `git push origin 내브랜치`)
+
+자주 쓰는 명령어 정리:
+
+| 명령어 | 하는 일 |
+|--------|---------|
+| `git fetch origin` | GitHub에서 최신 정보를 가져옴 (내 코드는 안 바뀜) |
+| `git merge origin/main` | GitHub의 main 코드를 내 브랜치에 합침 |
+| `git checkout 브랜치명` | 다른 브랜치로 이동 |
+| `git status` | 변경된 파일 목록 확인 |
+| `git add 파일명` | 커밋할 파일을 지정 |
+| `git commit -m "메시지"` | 변경사항을 저장 (커밋) |
+| `git push origin 브랜치명` | 내 커밋을 GitHub에 업로드 |
+
 ### 1. PR 올리기 전 main 최신화 필수
 
 PR을 올리기 전에 반드시 최신 main을 내 브랜치에 반영해야 합니다.
