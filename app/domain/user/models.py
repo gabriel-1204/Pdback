@@ -1,29 +1,29 @@
 from datetime import datetime
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserDocument(BaseModel):
     """MongoDB users 컬렉션 문서 스키마"""
 
-    # 기본 정보
-    username: str
-    email: str
-    password_hash: str
+    # 기본정보
+    username: str = Field(..., min_length=2, description="사용자 이름")
+    email: EmailStr = Field(..., description="로그인용 이메일")
+    password_hash: str = Field(..., description="bcrypt 암호화된 비밀번호")
 
-    # 권한 / 상태
-    role: str = "candidate"
-    is_active: bool = True
+    # 권한/상태
+    role: str = Field(default="candidate", description="candidate | admin")
+    is_active: bool = Field(default=True, description="계정 활성 여부")
 
     # 로그 및 기록
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     last_login: datetime | None = None
 
-    # 마이페이지 통계
-    interview_count: int = 0
-    average_score: float = 0.0
-    max_score: float = 0.0
+    # AI 면접관련
+    position: str | None = Field(default=None, description="희망직무")
 
-    # 보안 (JWT)
+    # 보안(JWT)
     refresh_token: str | None = None
+
+    class Config:
+        from_attributes = True
