@@ -103,13 +103,15 @@ frontend/                        # 프론트엔드 (HTML/CSS/JS)
 ### 1. PR 올리기 전 main 최신화 필수
 
 PR을 올리기 전에 반드시 최신 main을 내 브랜치에 반영해야 합니다.
-이렇게 해야 다른 팀원의 작업과 충돌이 있는지 미리 확인할 수 있습니다.
+하루 중간에 다른 팀원이 PR을 머지했을 수 있으므로, **작업 시작 전과 PR 전에** 최신화해주세요.
 
 ```bash
 git fetch origin
 git merge origin/main
 # 충돌이 있으면 해결 후 커밋
 ```
+
+> 추가로 매일 일과 종료 후 팀장이 모든 feature 브랜치를 일괄 최신화합니다.
 
 ### 2. `git add .` 사용 금지 — 본인 파일만 지정해서 add
 
@@ -180,6 +182,7 @@ git commit -m "[feedback] 피드백 서비스 함수 구현"
 1. 팀 채팅에 수정 내용 공유
 2. **별도 PR로 먼저 머지**
 3. 나머지 팀원이 `git fetch origin && git merge origin/main`으로 반영
+4. 추가로 팀장이 일과 종료 시 각 브랜치를 일괄 최신화합니다
 
 ### 4. 전체 작업 흐름 요약
 
@@ -195,3 +198,5 @@ git commit -m "[feedback] 피드백 서비스 함수 구현"
   └─ git push origin 내브랜치                      (푸시)
   └─ GitHub에서 PR 생성
 ```
+
+> 추가로 매일 일과 종료 후 팀장이 모든 feature 브랜치를 일괄 최신화합니다.
