@@ -29,7 +29,7 @@ class PostureSummary(BaseModel):
 
     eyes_score: float
     posture_score: float
-    bad_posture_count: int
+    attitude_score: float
     posture_comment: str
 
 

@@ -1,5 +1,10 @@
+from bson import ObjectId
+
 from app.domain.feedback.schema import FeedbackRequest, FeedbackResponse
 from app.domain.feedback.models import AiFeedback, PostureSummary, FeedbackDocument
+from app.domain.interview.models import InterviewDocument
+from app.database import get_database
+
 
 # - router 에서 쓰일 함수 3개
 # 피드백 생성 메인 함수
@@ -23,9 +28,10 @@ async def get_history(user_id: str) -> list[FeedbackResponse]:
 
 # - 여기서만 쓰이는 내부 함수들 5개
 # 면접 데이터들 가져오기
-async def _get_interview(session_id: str):
-    pass
-    # 모범답안 interview에 있으니까 잊지말고 가져오기
+async def _get_interview(session_id: str) -> InterviewDocument:
+    db = get_database()
+    doc = await db["interviews"].find_one({"_id": ObjectId(session_id)})
+    return InterviewDocument(**doc) # **: 딕셔너리를 풀어서 인자로 전달
 
 # gemini 여기서 한번 호출해서 필요한거 다 받기
 async def _generate_ai_feedback(interview) -> AiFeedback:
@@ -35,9 +41,38 @@ async def _generate_ai_feedback(interview) -> AiFeedback:
     # strengths_improvements
     # overall_feedback
 
-# 자세/태도 데이터 받은거 가공하기 (=> 태도 점수)
+# 자세/태도 데이터 받은거 피드백으로 가공
 def _process_posture(interview) -> PostureSummary:
-    pass
+    posture_score = interview.posture_safety_rate
+    eyes_score = interview.eye_contact
+    attitude_score = round(eyes_score * 0.4 + posture_score * 0.6, 1)
+
+    # 테스트 후 숫자 변경, 조건문 범위 변경 가능성 있음/ 단계: 부족-> 보통-> 완벽
+    if eyes_score >= 80 and posture_score >= 80: # 전부 80 이상. 모두 완벽!
+        comment = "시선 처리와 자세 모두 안정적이었습니다. 면접 내내 자신감 있는 태도를 유지했습니다."
+    elif eyes_score >= 80 and 60 <= posture_score < 80: # 시선 완벽/ 자세 보통
+        comment = "시선 처리는 훌륭했습니다. 자세를 조금만 더 바르게 유지한다면 더욱 좋은 인상을 줄 수 있습니다."
+    elif eyes_score >= 80 and posture_score < 60: # 시선 완벽/ 자세 부족          
+        comment = "시선 처리는 좋았으나, 자세가 많이 흐트러졌습니다. 앉은 자세를 의식적으로 바르게 유지해보세요."
+    elif 60 <= eyes_score < 80 and posture_score >= 80: # 시선 보통/ 자세 완벽
+        comment = "자세는 훌륭했습니다. 카메라를 조금만 더 자주 응시한다면 더욱 자신감 있어 보일 것입니다."
+    elif eyes_score < 60 and posture_score >= 80: # 시선 부족/ 자세 완벽          
+        comment = "자세는 안정적이었으나, 카메라 응시가 많이 부족했습니다. 면접관(카메라)을 자주 바라보는 연습을 해보세요."
+    elif eyes_score >= 60 and posture_score >= 60: # 시선 보통/ 자세 보통
+        comment = "시선 처리와 자세 모두 나쁘지 않았습니다. 전반적으로 조금만 더 자신감 있게 임해보세요."
+    elif 60 <= eyes_score < 80 and posture_score < 60: # 시선 보통/ 자세 부족
+        comment = "자세가 특히 불안정했습니다. 앉은 자세를 의식적으로 바르게 유지해보세요."
+    elif eyes_score < 60 and 60 <= posture_score < 80: # 시선 부족/ 자세 보통
+        comment = "카메라 응시가 특히 부족했습니다. 면접관(카메라)을 자주 바라보는 연습을 해보세요."
+    else: # 전부 60 미만. 모두 부족!
+        comment = "시선 처리와 자세 모두 개선이 필요합니다. 카메라를 정면으로 응시하고 허리를 펴는 습관을 들여보세요."
+
+    return PostureSummary(
+        eyes_score=eyes_score,
+        posture_score=posture_score,
+        attitude_score=attitude_score,
+        posture_comment=comment,
+    )
 
 # DB 데이터 -> 응답 변환
 def _to_response(doc: FeedbackDocument) -> FeedbackResponse:
