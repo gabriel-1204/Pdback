@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     # Gemini API
     GEMINI_API_KEY: str = ""
 
+    #JWT
+    SECRET_KEY: str = "my_secret_key"
+    
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"
     MONGODB_DB_NAME: str = "pdback"
