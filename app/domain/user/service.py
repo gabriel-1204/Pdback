@@ -18,7 +18,7 @@ async def register(username, email, password, position):
     password_hash = hash_password(password)
     await db["users"].insert_one({"username":username, "email":email, "password_hash":password_hash, 
     "role":"candidate", "is_active":True, "created_at": datetime.now(timezone.utc), "updated_at":datetime.now(timezone.utc),
-    "last_login":None, "position":position, "refresh_token":None,})
+    "last_login":None, "position":None, "refresh_token":None,})
     
     token = create_access_token({"sub":email})
     return token
@@ -50,7 +50,7 @@ async def logout(email):
     return {"message":"로그아웃되었습니다."}
 
 #내 정보 조회
-#db에서 나 찾아서 반환해주게
+#db에서 사용자 찾아서 반환
 async def get_me(email):
     db = get_database()
     user = await db["users"].find_one({"email":email})
