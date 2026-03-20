@@ -211,6 +211,12 @@ git commit -m "[feedback] 피드백 서비스 함수 구현"
 ### 4. 전체 작업 흐름 요약
 
 ```
+아침 로컬 브랜치 최신화
+git fetch origin
+git checkout feature/본인브랜치명
+git merge origin/main
+git push origin feature/본인브랜치명
+
 작업 시작
   └─ git fetch origin && git merge origin/main   (최신화)
   └─ 코드 작업
