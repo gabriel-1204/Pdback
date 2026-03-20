@@ -81,5 +81,6 @@ def _to_response(doc: FeedbackDocument) -> FeedbackResponse:
 
 # mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:
-    pass
-    # mongo db에서 document 저장하면 id 이상하게 생겨서 str로 변환 필요함
+    db = get_database()
+    result = await db["feedback"].insert_one(feedback.model_dump()) # model_dump: mongo db라서 딕셔너리로 변환
+    return str(result.inserted_id) # mongo db id 이상하게 생겨서 str로 변환 필요
