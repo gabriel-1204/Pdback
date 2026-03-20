@@ -23,3 +23,6 @@ class UserResponse(BaseModel):
     last_login: datetime | None = None  
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
