@@ -1,6 +1,6 @@
 from bson import ObjectId
 
-from app.domain.feedback.schema import FeedbackRequest, FeedbackResponse
+from app.domain.feedback.schema import FeedbackRequest, FeedbackResponse, QuestionFeedbackResponse, PostureSummaryResponse
 from app.domain.feedback.models import AiFeedback, PostureSummary, FeedbackDocument
 from app.domain.interview.models import InterviewDocument
 from app.database import get_database
@@ -75,9 +75,43 @@ def _process_posture(interview) -> PostureSummary:
     )
 
 # DB 데이터 -> 응답 변환
-def _to_response(doc: FeedbackDocument) -> FeedbackResponse:
-    pass
-    # score_graph
+# 수정, 검토중
+def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> FeedbackResponse:
+    # question_number 기준으로 model_answer 매핑 딕셔너리 생성
+    model_answers = {q.question_number: q.model_answer for q in interview.questions}
+    question_contents = {q.question_number: q.question_content for q in interview.questions}
+    answer_contents = {q.question_number: q.answer.answer_content for q in interview.questions if q.answer}
+
+    question_feedbacks = [
+        QuestionFeedbackResponse(
+            question_number=qf.question_number,
+            score=qf.score,
+            comment=qf.comment,
+            model_answer=model_answers.get(qf.question_number, ""),
+            question_content=question_contents.get(qf.question_number, ""),
+            answer_content=answer_contents.get(qf.question_number, ""),
+        )
+        for qf in doc.ai_feedback.question_feedbacks
+    ]
+
+    posture_summary = PostureSummaryResponse(
+        eyes_score=doc.posture_summary.eyes_score,
+        posture_score=doc.posture_summary.posture_score,
+        attitude_score=doc.posture_summary.attitude_score,
+        posture_comment=doc.posture_summary.posture_comment,
+    )
+
+    return FeedbackResponse(
+        interview_score=doc.ai_feedback.interview_score,
+        technical_score=doc.ai_feedback.technical_score,
+        logic_score=doc.ai_feedback.logic_score,
+        keyword_score=doc.ai_feedback.keyword_score,
+        interview_comment=doc.ai_feedback.interview_comment,
+        strengths=doc.ai_feedback.strengths,
+        improvements=doc.ai_feedback.improvements,
+        question_feedbacks=question_feedbacks,
+        posture_summary=posture_summary,
+    )
 
 # mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:

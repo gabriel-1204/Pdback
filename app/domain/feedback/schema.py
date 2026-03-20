@@ -1,13 +1,15 @@
 from pydantic import BaseModel
 
-
+# schema.py: API 요청/응답 모양 (클라이언트한테 보내는 데이터)
 class QuestionFeedbackResponse(BaseModel):
     """질문별 피드백 응답 — models.QuestionFeedback 대응"""
 
     question_number: int
     score: float
-    comment: str
-    model_answer: str
+    comment: str             # ai가 내 답변 평가
+    model_answer: str        # 모범답안
+    question_content: str    # 피드백 페이지에서 (상세보기) 누르면 질문내용 확인가능하게
+    answer_content: str      # 피드백 페이지에서 (상세보기) 누르면 내 답변 확인가능하게
 
 
 class PostureSummaryResponse(BaseModel):
