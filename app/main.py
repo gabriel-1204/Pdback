@@ -6,7 +6,6 @@ from fastapi.templating import Jinja2Templates
 from app.api.v1.router import v1_router
 from app.config import settings
 from app.database import close_db, connect_db
-from app.services.gemini import configure_gemini
 
 #탬플릿 설정
 templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
@@ -14,7 +13,6 @@ templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 async def lifespan(app: FastAPI):
     # 시작 시
     await connect_db()
-    configure_gemini()
     yield
     # 종료 시
     await close_db()
@@ -47,6 +45,11 @@ async def health_check():
     return {"status": "ok"}
 
 #인터뷰 html
-@app.get("/")
+@app.get("/interview")
 async def index(request: Request):
     return templates.TemplateResponse("interview.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
+
+# 면접 시작 버튼 누르면 interview-setup.html 로 들어감.
+@app.get("/start")
+async def index(request: Request):
+    return templates.TemplateResponse("interview-setup.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})

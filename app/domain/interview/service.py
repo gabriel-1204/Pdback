@@ -12,10 +12,10 @@ from app.domain.interview.schema import (
     InterviewStartRequest,
     InterviewStartResponse,
 )
-from app.services.gemini import get_model, create_chat_session
+from app.services.gemini import get_client, create_chat_session
 
 MAX_QUESTIONS = 5
-
+# 면접 세션을 생성하고 첫 질문을 반환한다.
 async def start_interview(request: InterviewStartRequest) -> InterviewStartResponse:
     """면접 세션을 생성하고 첫 질문을 반환합니다."""
     # TODO: Gemini API 호출하여 첫 질문 생성
@@ -71,7 +71,7 @@ async def start_interview(request: InterviewStartRequest) -> InterviewStartRespo
 
     #raise NotImplementedError
 
-
+#답변을 분석하고 꼬리 질문을 생성한다.
 async def submit_answer(request: AnswerRequest) -> AnswerResponse:
     """답변을 분석하고 꼬리 질문을 생성합니다."""
     db = get_database()
@@ -127,7 +127,7 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
         experience_years=doc["career_years"],
     )
 
-    model = get_model(system_instruction=system_prompt)
+    model = get_client()
     chat = model.start_chat(history=history)
     response = chat.send_message(request.answer_content)
     follow_up_question = response.text.strip()
