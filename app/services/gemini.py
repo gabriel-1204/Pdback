@@ -1,49 +1,55 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from app.config import settings
+from app.domain.interview.prompt import build_system_prompt
+# 클라이언트를 모듈 레벨에서 한 번만 생성 (함수 끝나도 안 닫힘)
+# genai.Client거나 클라이언트가 없으면None(아직생성안됨) / 처음은 None으로 시작
+_client: genai.Client | None = None
 
 
-def configure_gemini():
-    """Gemini API 키를 설정합니다."""
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-
-
-def get_model(model_name: str = "gemini-2.0-flash") -> genai.GenerativeModel:
-    """Gemini 모델 인스턴스를 반환."""
-    return genai.GenerativeModel(model_name)
+# 이함수는 글로벌로 _client를 가져오고 처음실행하는거면
+# None 이니까 if 문으로 인해 None이 있냐?로 트루가 되서 ganai.Client로 
+# api키를 불러오고 Api가 들어있는 Client를 외부로 반환
+def get_client() -> genai.Client:
+    """Gemini 클라이언트를 반환합니다."""
+    global _client
+    # 클라이언트가 없으면 새로 만들고, 있으면 기존 것 재사용
+    if _client is None:
+        _client = genai.Client(api_key=settings.GEMINI_API_KEY)
+    return _client
 
 
 # 면접관 페르소나 설정 후 Gemini 대화 세션을 생성하는 함수
-def create_chat_session(
-    job_role: str,
-    tech_stack: list[str],
-    experience_years: int,
-) -> genai.ChatSession:
+async def create_chat_session(
+    job_role: str,  # 직무명
+    tech_stack: list[str], # 기술 스택
+    experience_years: int, # 경력
+):
     """면접관 페르소나가 설정된 Gemini 대화 세션 생성"""
-    # prompt.py 에서 시스템 프롬프트 가져오기
-    from app.domain.interview.prompt import build_system_prompt
 
-    # API 키 설정
-    configure_gemini()
-
-    # 시스템 프롬프트 완성 / 시스템 프롬포트에 빈칸에 내용을 삽입함
+    # get_client 함수 사용(API)
+    client = get_client()
+    # 위에서 불러온 직무명, 기술스택, 경력을 build_system_prompt
+    # 빈칸에 삽입하여 system_prompt 변수 생성 
     system_prompt = build_system_prompt(job_role, tech_stack, experience_years)
 
-    # llm 모델 지정
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",          # 사용할 모델
-        system_instruction=system_prompt,       # llm 에게 시스템 프롬포트 주입
+    return client.aio.chats.create(             # 비동기 대화 세션 만듬
+        model="gemini-3.1-flash-lite-preview",  # 사용할 LLM 모델
+        config=types.GenerateContentConfig(     #LLM에게 역할 설정
+            system_instruction=system_prompt,   #시스템 프롬포트 주입
+            #temperature=0.7,         # 답변 창의성 (0~1, 낮을수록 일관된 답변)
+            #max_output_tokens=500,   # 최대 답변 길이
+        ),
     )
-
-    # 대화 세션 시작 (history[]에 대화 내용이 저장됨)
-    return model.start_chat(history=[])
 
 
 # Gemini한테 말 걸고 대답 받아오는 함수
 async def ask_question(
-    chat: genai.ChatSession,  # create_chat_session()으로 만든 대화 세션
-    prompt: str,              # Gemini한테 보낼 메시지
-) -> str:                     # Gemini 응답 문자열 반환
+    chat,           # 반드시 create_chat_session() 반환값을 넣어야 함
+    prompt: str,    # Gemini한테 보낼 메시지
+) -> str:
     """Gemini에게 질문을 요청하고 응답을 반환합니다."""
-    response = await chat.send_message_async(prompt) # Gemini에게 문자열로 보냄
-    return response.text.strip()                     # Gemini가 그걸 기반으로 답변을함
+    # chat 세션을 통해 Gemini한테 메시지를 보내고 응답을 기다림.
+    response = await chat.send_message(prompt)
+    return response.text.strip() # Gemini 응답
