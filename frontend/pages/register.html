@@ -26,19 +26,23 @@
       <form id="register-form">
         <div class="input-group">
           <label>이름</label>
-          <input type="text" placeholder="홍길동">
+          <input type="text" id="username" placeholder="홍길동">
         </div>
         <div class="input-group">
           <label>이메일</label>
-          <input type="email" placeholder="example@email.com">
+          <input type="email" id="email" placeholder="example@email.com">
         </div>
         <div class="input-group">
           <label>비밀번호</label>
-          <input type="password" placeholder="비밀번호 입력">
+          <input type="password" id="password" placeholder="비밀번호 입력(8자 이상)">
         </div>
         <div class="input-group">
           <label>비밀번호 확인</label>
-          <input type="password" placeholder="비밀번호 확인">
+          <input type="password" id="password-confirm" placeholder="비밀번호 확인">
+        </div>
+        <div class="input-group">
+          <label>포지션</label>
+          <input type="text" id="position" placeholder="예 - backend, frontend, devops">
         </div>
         <button type="submit" class="btn-primary">회원가입</button>
       </form>
@@ -48,6 +52,49 @@
     </div>
   </div>
 </div>
+
+<script>
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const passwordConfirm = document.getElementById('password-confirm').value;
+    const position = document.getElementById('position').value || null; //포지션은 선택값이라 입력없으면 null로 출력
+
+    //폼 유효성 검사
+    if (!username || !email || !password) {
+      alert('모든 항목을 입력해주세요.');
+      return;
+    }
+
+    if (password !== passwordConfirm) {
+      alert('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    //백엔드 API 연동
+    try {
+      const response = await fetch('/api/v1/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password, position }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        window.location.href = 'interview-setup.html';
+      } else {
+        alert(data.detail);
+      }
+    } catch (e) {
+      alert('네트워크 오류가 발생했습니다.');
+    }
+  });
+</script>
 
 </body>
 </html>

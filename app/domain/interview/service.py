@@ -12,7 +12,7 @@ from app.domain.interview.schema import (
     InterviewStartRequest,
     InterviewStartResponse,
 )
-from app.services.gemini import get_client, create_chat_session
+from app.services.gemini import create_chat_session, ask_question
 
 MAX_QUESTIONS = 5
 # 면접 세션을 생성하고 첫 질문을 반환한다.
@@ -20,21 +20,16 @@ async def start_interview(request: InterviewStartRequest) -> InterviewStartRespo
     """면접 세션을 생성하고 첫 질문을 반환합니다."""
     # TODO: Gemini API 호출하여 첫 질문 생성
 
-    # 1. 시스템 프롬프트 생성
-    system_prompt = build_system_prompt(
+    # 2. Gemini API 호출 → 첫 질문 생성(model 이 질문)
+    chat = await create_chat_session(
         job_role=request.job_role,
         tech_stack=request.tech_stack,
-        experience_years=request.experience_years,
-    )
+        experience_years=request.experience_years)
+    
+    first_question = await ask_question(chat, get_first_question_prompt())
 
-    # 2. Gemini API 호출 → 첫 질문 생성
-    model = create_chat_session()
 
-    chat = model.start_chat(history=[{"role": "user", "parts": [system_prompt]}])
-    response = chat.send_message_async(get_first_question_prompt())
-    first_question = response.text.strip()
-
-    # 3. MongoDB에 세션 저장
+    # 3. 세션 id 발급, document 생성
     session_id = str(uuid.uuid4())
     now = datetime.now()
 
@@ -121,16 +116,13 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
             history.append({"role": "user", "parts": [q["answer"]["answer_content"]]})
 
     # 세션의 system_prompt 재생성 (Gemini는 대화 상태를 저장하지 않음)
-    system_prompt = build_system_prompt(
-        job_role=doc["position"],
+
+    chat = await create_chat_session(job_role=doc["position"],
         tech_stack=doc["tech_stack"],
         experience_years=doc["career_years"],
-    )
-
-    model = get_client()
-    chat = model.start_chat(history=history)
-    response = chat.send_message(request.answer_content)
-    follow_up_question = response.text.strip()
+        history=history)
+    
+    follow_up_question = await ask_question(chat, request.answer_content)
 
     # 5. 꼬리질문을 새 Question으로 MongoDB에 저장
     new_question = Question(
