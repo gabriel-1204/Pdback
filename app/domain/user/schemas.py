@@ -12,7 +12,7 @@ class UserRegister(BaseModel):
 # 2. 로그인 입력값
 class UserLogin(BaseModel):
     email : EmailStr
-    password : str = Field(..., min_length=5)
+    password : str = Field(..., min_length=8)
 
 
 # 3. 응답값 - 보여줘도되는 값만
