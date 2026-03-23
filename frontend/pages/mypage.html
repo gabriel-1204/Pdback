@@ -1,85 +1,213 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>마이페이지 - P:dback</title>
-  <link rel="stylesheet" href="../css/common.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - P:dback</title>
+    <link rel="stylesheet" href="../css/common.css">
+  </head>
+  <body>
 
-<nav class="nav">
-  <a href="../index.html" class="nav-logo">P:dback</a>
-  <div class="nav-links">
-    <a href="interview-setup.html">면접 시작</a>
-    <a href="history.html">히스토리</a>
-    <a href="mypage.html" class="active">마이페이지</a>
-    <a href="login.html">로그아웃</a>
-  </div>
-</nav>
-
-<div class="page-container">
-  <div class="page-content">
-    <div class="profile-layout">
-      <div class="profile-card">
-        <div class="profile-avatar">👤</div>
-        <div class="profile-name">--</div>
-        <div class="profile-email">--</div>
-        <div class="profile-stats">
-          <div class="stat-item">
-            <div class="stat-value">-</div>
-            <div class="stat-label">총 면접 횟수</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">-</div>
-            <div class="stat-label">평균 점수</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">-</div>
-            <div class="stat-label">최고 점수</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">-</div>
-            <div class="stat-label">이번 주</div>
-          </div>
-        </div>
+    <nav class="nav">
+      <a href="../index.html" class="nav-logo">P:dback</a>
+      <div class="nav-links">
+        <a href="interview-setup.html">면접 시작</a>
+        <a href="history.html">히스토리</a>
+        <a href="mypage.html" class="active">마이페이지</a>
+        <a href="login.html" id="btn-logout">로그아웃</a>
       </div>
-      <div class="profile-form">
-        <h3>프로필 수정</h3>
-        <form id="profile-form">
-          <div class="input-group">
-            <label>이름</label>
-            <input type="text" placeholder="이름">
+    </nav>
+
+    <div class="page-container">
+      <div class="page-content">
+        <div class="profile-layout">
+          <div class="profile-card">
+            <div class="profile-avatar">👤</div>
+            <div id="profile-name" class="profile-name">--</div>
+            <div id="profile-email" class="profile-email">--</div>
+            <div class="profile-stats">
+              <div class="stat-item">
+                <div class="stat-value">-</div>
+                <div class="stat-label">총 면접 횟수</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">-</div>
+                <div class="stat-label">평균 점수</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">-</div>
+                <div class="stat-label">최고 점수</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">-</div>
+                <div class="stat-label">이번 주</div>
+              </div>
+            </div>
           </div>
-          <div class="input-group">
-            <label>이메일</label>
-            <input type="email" placeholder="이메일" disabled style="color:#bbb;">
+          <div class="profile-form">
+            <h3>프로필 수정</h3>
+            <form id="profile-form">
+              <div class="input-group">
+                <label for="input-username">이름</label>
+                <input id="input-username" type="text" placeholder="이름">
+              </div>
+              <div class="input-group">
+                <label for="input-email">이메일</label>
+                <input id="input-email" type="email" placeholder="이메일" disabled style="color:#bbb;">
+              </div>
+              <div class="input-group">
+                <label for="input-current-password">현재 비밀번호</label>
+                <input id="input-current-password" type="password" placeholder="현재 비밀번호">
+              </div>
+              <div class="input-group">
+                <label for="input-new-password">새 비밀번호</label>
+                <input id="input-new-password" type="password" placeholder="새 비밀번호 입력">
+              </div>
+              <div class="input-group">
+                <label for="input-confirm-password">새 비밀번호 확인</label>
+                <input id="input-confirm-password" type="password" placeholder="새 비밀번호 확인">
+              </div>
+              <div style="display:flex;gap:12px;margin-top:8px;">
+                <button type="submit" class="btn-primary" style="width:auto;padding:10px 32px;">저장</button>
+                <button type="button" id="btn-cancel" class="btn-secondary">취소</button>
+              </div>
+            </form>
+            <div class="divider"></div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button id="btn-withdraw" class="btn-danger" style="font-size:13px;padding:8px 16px;">회원 탈퇴</button>
+            </div>
           </div>
-          <div class="input-group">
-            <label>현재 비밀번호</label>
-            <input type="password" placeholder="현재 비밀번호">
-          </div>
-          <div class="input-group">
-            <label>새 비밀번호</label>
-            <input type="password" placeholder="새 비밀번호 입력">
-          </div>
-          <div class="input-group">
-            <label>새 비밀번호 확인</label>
-            <input type="password" placeholder="새 비밀번호 확인">
-          </div>
-          <div style="display:flex;gap:12px;margin-top:8px;">
-            <button type="submit" class="btn-primary" style="width:auto;padding:10px 32px;">저장</button>
-            <button type="button" class="btn-secondary">취소</button>
-          </div>
-        </form>
-        <div class="divider"></div>
-        <div style="display:flex;justify-content:flex-end;">
-          <button class="btn-danger" style="font-size:13px;padding:8px 16px;">회원 탈퇴</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-</body>
+    <script>
+      //로그인할 때 저장된 토큰 가져오기
+      const token = localStorage.getItem('token');
+
+      //토큰이 없음=로그인 하지않음 , 로그인페이지로 이동
+      if (!token) window.location.href = 'login.html';
+
+      //사용자 정보 로드(내 정보 가져와서 보여주기 작업)
+      //토큰이 있으면 로그인한 사람 - 없으면 로그인 안한사람
+      //상대경로사용하여 배포시 자동으로 경로 맞춰지도록 설정
+      async function loadUserInfo() {
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (!response.ok) {
+            window.location.href = 'login.html';
+            return;
+          }
+
+          const user = await response.json();
+          document.getElementById('profile-name').textContent = user.username; //프로필칸 유저정보 표시용
+          document.getElementById('profile-email').textContent = user.email;
+          document.getElementById('input-username').value = user.username; //이름 수정 폼 입력칸
+          document.getElementById('input-email').value = user.email; //이메일 수정불가능 , 그냥 현재 이메일(아이디) 보여주기
+        } catch (error) {
+          alert('사용자 정보를 불러오는 데 실패했습니다.');
+        }
+      }
+
+      //취소 버튼 - 입력 중인 내용을 원래 정보로 되돌리기
+      document.getElementById('btn-cancel').addEventListener('click', () => {
+        loadUserInfo();
+      });
+
+      //프로필 수정(이름,비밀번호)
+      //미완성 - API연동필요!!!!!!후 수정 필요할것 같아요
+      document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById('input-username').value;
+        const currentPassword = document.getElementById('input-current-password').value;
+        const newPassword = document.getElementById('input-new-password').value;
+        const confirmPassword = document.getElementById('input-confirm-password').value;
+
+        //새로운 비밀번호 입력했을 때만 유효성 검사
+        //이름만 변경, 비밀번호만 변경, 둘다 변경 가능
+        if (newPassword) {
+          if (!currentPassword) {
+            alert('현재 비밀번호를 입력해주세요.');
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            alert('새 비밀번호가 일치하지 않습니다.');
+            return;
+          }
+        }
+
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              username,
+              current_password: currentPassword || undefined, //변경된 값있으면 전송, 없으면 제외
+              new_password: newPassword || undefined,
+            })
+          });
+
+          if (response.ok) {
+            alert('프로필이 수정되었습니다.'); //수정후에
+            loadUserInfo(); //다시 실행
+          } else {
+            alert('프로필 수정에 실패했습니다.');
+          }
+        } catch (error) {
+          alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.');
+        }
+      });
+
+      //로그아웃
+      document.getElementById('btn-logout').addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        try {
+          await fetch('/api/v1/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (error) {
+          // 로그아웃 요청 실패해도 토큰 삭제 후 로그인페이지 이동
+        }
+
+        localStorage.removeItem('token'); //토큰 삭제하고
+        window.location.href = 'login.html'; //로그인페이지 이동
+      });
+
+      //회원 탈퇴
+      //미완성 - API연동필요!!!!!!후 수정 필요할것 같아요 
+      document.getElementById('btn-withdraw').addEventListener('click', async () => {
+        if (!confirm('정말 탈퇴하시겠습니까?')) return;
+
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+
+          if (!response.ok) {
+            alert('회원 탈퇴에 실패했습니다.');
+            return;
+          }
+        } catch (error) {
+          alert('네트워크 오류가 발생했습니다.');
+          return;
+        }
+
+        localStorage.removeItem('token'); //토큰 삭제하고
+        window.location.href = 'login.html'; //로그인페이지 이동
+      });
+      
+      //토큰 있으면 사용자 정보 화면에 표시
+      loadUserInfo();
+    </script>
+  </body>
 </html>
