@@ -39,9 +39,9 @@
         <label>기술 스택</label>
         <input type="text" placeholder="기술 스택을 검색하세요...">
         <div class="stack-tags">
-          <div class="stack-tag">Python ✕</div>
-          <div class="stack-tag">FastAPI ✕</div>
-          <div class="stack-tag">MongoDB ✕</div>
+          <div class="suggest-tag">Python ✕</div>
+          <div class="suggest-tag">FastAPI ✕</div>
+          <div class="suggest-tag">MongoDB ✕</div>
         </div>
       </div>
 
@@ -71,10 +71,20 @@
         </div>
       </div>
 
-      <button class="btn-primary" style="margin-top: 16px;">면접 시작하기</button>
+      <a href="/interview"> <button class="btn-primary" style="margin-top: 16px;">면접 시작하기</button></a>
     </div>
   </div>
 </div>
 
+<script>
+  document.querySelectorAll(".radio-group").forEach(group => {
+    group.querySelectorAll(".radio-mock").forEach(item => {
+      item.addEventListener("click", () => {
+        group.querySelectorAll(".radio-mock").forEach(i => i.classList.remove("selected"));
+        item.classList.add("selected");
+      });
+    });
+  });
+</script>
 </body>
 </html>

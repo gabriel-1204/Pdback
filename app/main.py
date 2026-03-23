@@ -46,10 +46,14 @@ async def health_check():
 
 #인터뷰 html
 @app.get("/interview")
-async def index(request: Request):
-    return templates.TemplateResponse("interview.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
+async def interview_page(request: Request):
+    return templates.TemplateResponse("pages/interview.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
 
 # 면접 시작 버튼 누르면 interview-setup.html 로 들어감.
 @app.get("/start")
-async def index(request: Request):
-    return templates.TemplateResponse("interview-setup.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
+async def start_page(request: Request):
+    return templates.TemplateResponse("pages/interview-setup.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
+
+@app.get("/")
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})

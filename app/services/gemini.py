@@ -25,6 +25,7 @@ async def create_chat_session(
     job_role: str,  # 직무명
     tech_stack: list[str], # 기술 스택
     experience_years: int, # 경력
+    history: list = [],
 ):
     """면접관 페르소나가 설정된 Gemini 대화 세션 생성"""
 
@@ -36,6 +37,7 @@ async def create_chat_session(
 
     return client.aio.chats.create(             # 비동기 대화 세션 만듬
         model="gemini-3.1-flash-lite-preview",  # 사용할 LLM 모델
+        history=history,
         config=types.GenerateContentConfig(     #LLM에게 역할 설정
             system_instruction=system_prompt,   #시스템 프롬포트 주입
             #temperature=0.7,         # 답변 창의성 (0~1, 낮을수록 일관된 답변)
