@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.domain.user import service
-from app.domain.user.schemas import UserRegister, UserLogin
+from app.domain.user.schemas import UserRegister, UserLogin, UserResponse
 from app.domain.user.dependency import get_current_user
 
 
@@ -8,9 +8,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 #회원가입,로그인은 스키마에서 받기
 #회원가입
-@router.post("/register")
+@router.post("/register", status_code=201)
 async def register(data: UserRegister):
-    token = await service.register(data.username, data.email, data.password)
+    token = await service.register(data.username, data.email, data.password, data.position)
     return {"token":token}
 
 #로그인
@@ -23,11 +23,11 @@ async def login(data: UserLogin):
 #로그아웃, 내정보조회는 이미 로그인한 사용자니까 토큰에서 꺼내서 보기
 #로그아웃
 @router.post("/logout")
-async def logout(email: str = Depends(get_current_user)): #현재 로그인한 유저인지 확인
-    return await service.logout(email)
+async def logout(current_user: str = Depends(get_current_user)):
+    return await service.logout(current_user)
 
 
 #내 정보조회
-@router.get("/me")
-async def get_me(email: str = Depends(get_current_user)):
-    return await service.get_me(email)
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: str = Depends(get_current_user)):
+    return await service.get_me(current_user)
