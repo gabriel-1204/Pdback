@@ -1,19 +1,23 @@
+import json
+import re
+
 from bson import ObjectId
 
-from app.domain.feedback.schema import FeedbackRequest, FeedbackResponse, QuestionFeedbackResponse, PostureSummaryResponse
-from app.domain.feedback.models import AiFeedback, PostureSummary, FeedbackDocument
+from app.domain.feedback.schema import (
+    FeedbackResponse, QuestionFeedbackResponse,
+    PostureSummaryResponse)
+from app.domain.feedback.models import (
+    AiFeedback, PostureSummary,
+    FeedbackDocument, QuestionFeedback)
 from app.domain.interview.models import InterviewDocument
+from app.domain.interview.prompt import get_feedback_prompt
+from app.services.gemini import get_client
 from app.database import get_database
 
 
 # - router 에서 쓰일 함수 3개
 # 피드백 생성 메인 함수
 async def create_feedback(session_id: str) -> FeedbackResponse:
-    # 1. 면접 데이터 조회
-    # 2. AI 피드백 생성 (논리/기술점수, 강점/개선점, 총괄피드백)
-    # 3. 자세 데이터 가공
-    # 4. DB 저장
-    # 5. 응답 변환
     pass
 
 # 피드백 결과 조회 (feedback.html)
@@ -25,7 +29,6 @@ async def get_history(user_id: str) -> list[FeedbackResponse]:
     pass
 
 
-
 # - 여기서만 쓰이는 내부 함수들 5개
 # 면접 데이터들 가져오기
 async def _get_interview(session_id: str) -> InterviewDocument:
@@ -34,12 +37,54 @@ async def _get_interview(session_id: str) -> InterviewDocument:
     return InterviewDocument(**doc) # **: 딕셔너리를 풀어서 인자로 전달
 
 # gemini 여기서 한번 호출해서 필요한거 다 받기
-async def _generate_ai_feedback(interview) -> AiFeedback:
-    pass
-    # technical_score
-    # logical_score
-    # strengths_improvements
-    # overall_feedback
+async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
+    # interview에서 질문/답변 목록 추출
+    questions = [q.question_content for q in interview.questions]
+    answers = []
+    for q in interview.questions:
+        if q.answer:                      
+            answers.append(q.answer.answer_content)
+        else:  
+            answers.append("")
+
+    # 평일님 prompt.py 완성 후 연결 필요 1
+    # 피드백 프롬프트 생성
+    prompt = get_feedback_prompt(
+        questions=questions,
+        answers=answers,
+        job_role=interview.position,
+        experience_years=interview.career_years,
+    )
+
+    # 평일님 prompt.py 완성 후 연결 필요 2
+    # 모델 일단 쓰시던거 넣어놨어요. 함수 수정하셔도 됩니다.
+    # Gemini 호출(채팅 세션 불필요, 피드백 생성은 대화형이 아니라 분석용이라 단발성)
+    client = get_client()
+    response = await client.aio.models.generate_content(
+        model="gemini-3.1-flash-lite-preview",
+        contents=prompt,
+    )
+
+    # gemini 응답이 마크다운에 싸여서 나오는 경우 대비하여 파싱 코드
+    # 파싱: 텍스트를 프로그램이 쓸 수 있는 구조로 변환하는것
+    # gemini 응답에서 마크다운 껍데기 벗기기 -> 그 안의 json 텍스트를 python 딕셔너리로 변환
+    raw = response.text.strip()                 # gemini 응답 텍스트 꺼내기
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)  # 앞쪽 ```json -> 빈 문자열로 대체
+    raw = re.sub(r"\s*```$", "", raw).strip()   # 뒤쪽 ``` -> 빈 문자열로 대체
+    data = json.loads(raw)                      # 'json 문자열' -> {python 딕셔너리}
+
+    # AiFeedback 객체 만들어서 반환
+    # return AiFeedback(
+    #     interview_score=data["interview_score"],
+    #     technical_score=data["technical_score"],
+    #     logic_score=data["logic_score"],
+    #     keyword_score=data["keyword_score"],
+    #     interview_comment=data["interview_comment"],
+    #     strengths=data["strengths"],
+    #     improvements=data["improvements"],
+    #     question_feedbacks=question_feedbacks,
+    # )
+    pass  # 프롬프트가 아직 완성이 안돼서 미완성 함수라 패스~
 
 # 자세/태도 데이터 받은거 피드백으로 가공
 def _process_posture(interview) -> PostureSummary:
@@ -52,11 +97,11 @@ def _process_posture(interview) -> PostureSummary:
         comment = "시선 처리와 자세 모두 안정적이었습니다. 면접 내내 자신감 있는 태도를 유지했습니다."
     elif eyes_score >= 80 and 60 <= posture_score < 80: # 시선 완벽/ 자세 보통
         comment = "시선 처리는 훌륭했습니다. 자세를 조금만 더 바르게 유지한다면 더욱 좋은 인상을 줄 수 있습니다."
-    elif eyes_score >= 80 and posture_score < 60: # 시선 완벽/ 자세 부족          
+    elif eyes_score >= 80 and posture_score < 60: # 시선 완벽/ 자세 부족    
         comment = "시선 처리는 좋았으나, 자세가 많이 흐트러졌습니다. 앉은 자세를 의식적으로 바르게 유지해보세요."
     elif 60 <= eyes_score < 80 and posture_score >= 80: # 시선 보통/ 자세 완벽
         comment = "자세는 훌륭했습니다. 카메라를 조금만 더 자주 응시한다면 더욱 자신감 있어 보일 것입니다."
-    elif eyes_score < 60 and posture_score >= 80: # 시선 부족/ 자세 완벽          
+    elif eyes_score < 60 and posture_score >= 80: # 시선 부족/ 자세 완벽        
         comment = "자세는 안정적이었으나, 카메라 응시가 많이 부족했습니다. 면접관(카메라)을 자주 바라보는 연습을 해보세요."
     elif eyes_score >= 60 and posture_score >= 60: # 시선 보통/ 자세 보통
         comment = "시선 처리와 자세 모두 나쁘지 않았습니다. 전반적으로 조금만 더 자신감 있게 임해보세요."
