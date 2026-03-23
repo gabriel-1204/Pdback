@@ -10,31 +10,29 @@ from app.domain.feedback.models import (
     AiFeedback, PostureSummary,
     FeedbackDocument, QuestionFeedback)
 from app.domain.interview.models import InterviewDocument
-from app.domain.interview.prompt import get_feedback_prompt
+from app.domain.feedback.prompt import get_feedback_prompt
 from app.services.gemini import get_client
 from app.database import get_database
 
 
-# - router 에서 쓰일 함수 3개
+# === router.py 함수 3개
 # 피드백 생성 메인 함수
-# _generate_ai_feedback 완성 후 주석 해제
 async def create_feedback(session_id: str) -> FeedbackResponse:
-    
-    # interview = await _get_interview(session_id)          # 면접 데이터
-    # ai_feedback = await _generate_ai_feedback(interview)  # ai 피드백
-    # posture_summary = _process_posture(interview)         # 자세/태도 데이터
+
+    interview = await _get_interview(session_id)          # 면접 데이터
+    ai_feedback = await _generate_ai_feedback(interview)  # ai 피드백
+    posture_summary = _process_posture(interview)         # 자세/태도 데이터
 
     # DB에 저장할 문서 생성
-    # feedback_doc = FeedbackDocument(
-    #     interview_id=session_id,
-    #     user_id=interview.user_id,
-    #     ai_feedback=ai_feedback,
-    #     posture_summary=posture_summary,
-    # )
+    feedback_doc = FeedbackDocument(
+        interview_id=session_id,
+        user_id=interview.user_id,
+        ai_feedback=ai_feedback,
+        posture_summary=posture_summary,
+    )
 
-    # await _save_feedback(feedback_doc)             # DB에 저장
-    # return _to_response(feedback_doc, interview)   # 응답 형태로 변환
-    pass
+    await _save_feedback(feedback_doc)             # DB에 저장
+    return _to_response(feedback_doc, interview)   # 응답 형태로 변환
 
 
 # 피드백 결과 조회 (feedback.html)
@@ -67,7 +65,7 @@ async def get_history(user_id: str) -> list[FeedbackResponse]:
 
 
 
-# - 여기서만 쓰이는 내부 함수들 5개
+# === service.py 내부 함수 5개
 # 면접 데이터들 가져오기
 async def _get_interview(session_id: str) -> InterviewDocument:
     db = get_database()
@@ -86,7 +84,6 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
         else:  
             answers.append("")
 
-    # 평일님 prompt.py 완성 후 연결 필요 1
     # 피드백 프롬프트 생성
     prompt = get_feedback_prompt(
         questions=questions,
@@ -95,8 +92,6 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
         experience_years=interview.career_years,
     )
 
-    # 평일님 prompt.py 완성 후 연결 필요 2
-    # 모델 일단 쓰시던거 넣어놨어요. 함수 수정하셔도 됩니다.
     # Gemini 호출(채팅 세션 불필요, 피드백 생성은 대화형이 아니라 분석용이라 단발성)
     client = get_client()
     response = await client.aio.models.generate_content(
@@ -111,18 +106,27 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
     raw = re.sub(r"\s*```$", "", raw).strip()   # 뒤쪽 ``` -> 빈 문자열로 대체
     data = json.loads(raw)                      # 'json 문자열' -> {python 딕셔너리}
 
-    # AiFeedback 객체 만들어서 반환
-    # return AiFeedback(
-    #     interview_score=data["interview_score"],
-    #     technical_score=data["technical_score"],
-    #     logic_score=data["logic_score"],
-    #     keyword_score=data["keyword_score"],
-    #     interview_comment=data["interview_comment"],
-    #     strengths=data["strengths"],
-    #     improvements=data["improvements"],
-    #     question_feedbacks=question_feedbacks,
-    # )
-    pass  # 프롬프트가 아직 완성이 안돼서 미완성 함수라 패스~
+    question_feedbacks = []
+    # qf: 리스트 원소 하나하나/ "question_feedbacks": gemini 응답 json 키 이름, db 필드 이름
+    for qf in data["question_feedbacks"]:
+        question_feedbacks.append(
+            QuestionFeedback(
+                question_number=qf["question_number"],
+                score=qf["score"],
+                comment=qf["comment"],
+            )
+        )
+
+    return AiFeedback(
+        interview_score=data["interview_score"],
+        technical_score=data["technical_score"],
+        logic_score=data["logic_score"],
+        keyword_score=data["keyword_score"],
+        interview_comment=data["interview_comment"],
+        strengths=data["strengths"],
+        improvements=data["improvements"],
+        question_feedbacks=question_feedbacks,
+    )
 
 
 # 자세/태도 데이터 받은거 피드백으로 가공
@@ -202,5 +206,6 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
 # mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:
     db = get_database()
-    result = await db["feedbacks"].insert_one(feedback.model_dump()) # model_dump: mongo db라서 딕셔너리로 변환
+    # model_dump: mongo db라서 딕셔너리로 변환
+    result = await db["feedbacks"].insert_one(feedback.model_dump())
     return str(result.inserted_id) # mongo db id 이상하게 생겨서 str로 변환 필요
