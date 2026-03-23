@@ -38,7 +38,8 @@ app.add_middleware(
 
 # 라우터 등록
 app.include_router(v1_router)
-
+app.mount("/css", StaticFiles(directory=settings.STATIC_DIR), name="css")
+app.mount("/js", StaticFiles(directory="frontend/js"), name="js")  # ← 추가
 
 @app.get("/health")
 async def health_check():

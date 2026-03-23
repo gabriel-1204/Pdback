@@ -68,11 +68,8 @@
               <span></span><span></span><span></span><span></span><span></span>
             </div>
             <!-- 음성 텍스트 변환부분-->
-            {% if webkitSpeechRecognition not in window %}
-              음성 인식 대기 중...
-            {% else %}
-              음성 녹화 후 텍스트로 변경 중...
-            {% endif %}
+            <span id="interim-span" style="color:#999;"></span>
+            <span id="final-span"></span>
           </div>
           <button class="btn-danger" style="white-space:nowrap;padding:10px 16px;font-size:13px;">종료</button>
         </div>
@@ -80,6 +77,6 @@
     </div>
   </div>
 </div>
-
+<script src="/js/javascript.js"></script>
 </body>
 </html>
