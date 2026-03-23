@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
     
     #templates
-    TEMPLATES_DIR: str = str(BASE_DIR / "frontend" / "pages")
+    TEMPLATES_DIR: str = str(BASE_DIR / "frontend")
 
     #static
     STATIC_DIR: str = str(BASE_DIR / "frontend" / "css")
