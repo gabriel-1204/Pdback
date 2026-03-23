@@ -17,16 +17,54 @@ from app.database import get_database
 
 # - router 에서 쓰일 함수 3개
 # 피드백 생성 메인 함수
+# _generate_ai_feedback 완성 후 주석 해제
 async def create_feedback(session_id: str) -> FeedbackResponse:
+    
+    # interview = await _get_interview(session_id)          # 면접 데이터
+    # ai_feedback = await _generate_ai_feedback(interview)  # ai 피드백
+    # posture_summary = _process_posture(interview)         # 자세/태도 데이터
+
+    # DB에 저장할 문서 생성
+    # feedback_doc = FeedbackDocument(
+    #     interview_id=session_id,
+    #     user_id=interview.user_id,
+    #     ai_feedback=ai_feedback,
+    #     posture_summary=posture_summary,
+    # )
+
+    # await _save_feedback(feedback_doc)             # DB에 저장
+    # return _to_response(feedback_doc, interview)   # 응답 형태로 변환
     pass
+
 
 # 피드백 결과 조회 (feedback.html)
 async def get_feedback(interview_id: str) -> FeedbackResponse:
-    pass
+    db = get_database()
+
+    # feedbacks 컬렉션에서 면접 id로 조회
+    doc = await db["feedbacks"].find_one({"interview_id": interview_id})
+    feedback_doc = FeedbackDocument(**doc)          # 피드백 데이터
+    interview = await _get_interview(interview_id)  # 면접 데이터 (schema)
+
+    return _to_response(feedback_doc, interview)
+
 
 # 히스토리 목록 조회 (history.html)
 async def get_history(user_id: str) -> list[FeedbackResponse]:
-    pass
+    db = get_database()
+
+    # feedbacks 컬렉션에서 유저 id로 모든 피드백 조회
+    # (find는 포인터기 때문에 to_list로 실제 데이터 꺼내기/ length: 몇개까지 가져올지)
+    docs = await db["feedbacks"].find({"user_id": user_id}).to_list(length=None)
+
+    result = []
+    for doc in docs:
+        feedback_doc = FeedbackDocument(**doc)
+        interview = await _get_interview(feedback_doc.interview_id)
+        result.append(_to_response(feedback_doc, interview))
+
+    return result
+
 
 
 # - 여기서만 쓰이는 내부 함수들 5개
@@ -35,6 +73,7 @@ async def _get_interview(session_id: str) -> InterviewDocument:
     db = get_database()
     doc = await db["interviews"].find_one({"_id": ObjectId(session_id)})
     return InterviewDocument(**doc) # **: 딕셔너리를 풀어서 인자로 전달
+
 
 # gemini 여기서 한번 호출해서 필요한거 다 받기
 async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
@@ -65,9 +104,8 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
         contents=prompt,
     )
 
-    # gemini 응답이 마크다운에 싸여서 나오는 경우 대비하여 파싱 코드
+    # gemini 응답이 마크다운 껍데기에 싸여서 나오는 경우 대비하여 파싱 코드
     # 파싱: 텍스트를 프로그램이 쓸 수 있는 구조로 변환하는것
-    # gemini 응답에서 마크다운 껍데기 벗기기 -> 그 안의 json 텍스트를 python 딕셔너리로 변환
     raw = response.text.strip()                 # gemini 응답 텍스트 꺼내기
     raw = re.sub(r"^```(?:json)?\s*", "", raw)  # 앞쪽 ```json -> 빈 문자열로 대체
     raw = re.sub(r"\s*```$", "", raw).strip()   # 뒤쪽 ``` -> 빈 문자열로 대체
@@ -85,6 +123,7 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
     #     question_feedbacks=question_feedbacks,
     # )
     pass  # 프롬프트가 아직 완성이 안돼서 미완성 함수라 패스~
+
 
 # 자세/태도 데이터 받은거 피드백으로 가공
 def _process_posture(interview) -> PostureSummary:
@@ -118,6 +157,7 @@ def _process_posture(interview) -> PostureSummary:
         attitude_score=attitude_score,
         posture_comment=comment,
     )
+
 
 # DB 데이터 -> 응답 변환
 # 수정, 검토중
@@ -158,8 +198,9 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
         posture_summary=posture_summary,
     )
 
+
 # mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:
     db = get_database()
-    result = await db["feedback"].insert_one(feedback.model_dump()) # model_dump: mongo db라서 딕셔너리로 변환
+    result = await db["feedbacks"].insert_one(feedback.model_dump()) # model_dump: mongo db라서 딕셔너리로 변환
     return str(result.inserted_id) # mongo db id 이상하게 생겨서 str로 변환 필요
