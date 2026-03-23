@@ -230,3 +230,27 @@ git push origin feature/본인브랜치명
 ```
 
 > 추가로 매일 일과 종료 후 팀장이 모든 feature 브랜치를 일괄 최신화합니다.
+
+### 5. 다른 팀원의 PR이 머지된 후 내 브랜치 동기화
+
+작업 도중 다른 팀원의 PR이 main에 머지되면, 아래 순서로 내 브랜치를 최신화합니다.
+
+```bash
+# 1단계: 작업 중인 내용 저장 & 커밋 (자기 브랜치에서)
+git add 수정한파일명
+git commit -m "[파트] 작업내용"
+
+# 2단계: main 최신화
+git checkout main
+git pull origin main
+
+# 3단계: 자기 브랜치로 돌아와서 main 머지
+git checkout feature/자기브랜치
+git merge main
+
+# 4단계: 충돌 있으면 해결 후 커밋
+
+# 5단계: 작업 계속 진행
+```
+
+> 커밋하지 않고 merge하면 작업 중인 변경사항이 꼬일 수 있으므로, **반드시 커밋 후 동기화**해주세요.
