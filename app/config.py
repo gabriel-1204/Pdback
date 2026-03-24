@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
 
     #JWT
-    SECRET_KEY: str = "my_secret_key"
+    SECRET_KEY: str = ""
     
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"
