@@ -4,7 +4,7 @@ from datetime import datetime
 from app.database import get_database
 from app.domain.interview.models import Answer, InterviewDocument, Question
 from app.domain.interview.prompt import build_system_prompt, get_first_question_prompt
-
+from fastapi import HTTPException
 
 from app.domain.interview.schema import (
     AnswerRequest,
@@ -18,7 +18,7 @@ MAX_QUESTIONS = 5
 # 면접 세션을 생성하고 첫 질문을 반환한다.
 async def start_interview(request: InterviewStartRequest) -> InterviewStartResponse:
     """면접 세션을 생성하고 첫 질문을 반환합니다."""
-    # TODO: Gemini API 호출하여 첫 질문 생성
+    # Gemini API 호출하여 첫 질문 생성
 
     # 2. Gemini API 호출 → 첫 질문 생성(model 이 질문)
     chat = await create_chat_session(
@@ -52,7 +52,7 @@ async def start_interview(request: InterviewStartRequest) -> InterviewStartRespo
         status="in_progress",
         created_at=now,
     )
-    # TODO: 세션 정보를 MongoDB에 저장
+    # 세션 정보를 MongoDB에 저장
     db = get_database()
     await db["interviews"].insert_one(
         {**document.model_dump(), "_id": session_id}
@@ -75,7 +75,8 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
     # 1. MongoDB에서 세션 조회
     doc = await db["interviews"].find_one({"_id": request.session_id})
     if doc is None:
-        raise ValueError(f"세션을 찾을 수 없습니다: {request.session_id}")
+        raise HTTPException(status_code=404, detail=f"세션을 찾을 수 없습니다: {request.session_id}")
+
 
     questions: list[dict] = doc.get("questions", [])
     current_question_number = len(questions)  # 현재까지 질문 수
@@ -142,7 +143,4 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
 
     return AnswerResponse(follow_up_question=follow_up_question)
 
-    # TODO: 세션에서 대화 이력 조회
-    # TODO: Gemini API 호출하여 꼬리 질문 생성
-    # TODO: 답변 및 태도 점수를 MongoDB에 저장
-    #raise NotImplementedError
+
