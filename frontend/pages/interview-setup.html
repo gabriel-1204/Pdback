@@ -254,6 +254,28 @@ navigator.mediaDevices.getUserMedia({ audio: true })
       startBtn.textContent = '면접 시작하기';
     }
   });
+
+
+  document.querySelector(".btn-primary").addEventListener("click", () => {
+    // 직무 선택
+    const jobRole = document.querySelector(".radio-group:nth-of-type(1) .radio-mock.selected")?.textContent ?? "백엔드";
+
+    // 기술 스택 (선택된 태그에서 ✕ 제거)
+    const techStack = [...document.querySelectorAll(".stack-tags .suggest-tag")]
+        .map(tag => tag.textContent.replace("✕", "").trim());
+
+    // 경력 연차
+    const experienceText = document.querySelector(".radio-group:nth-of-type(2) .radio-mock.selected")?.textContent ?? "신입";
+    const experienceYears = experienceText === "신입" ? 0
+        : experienceText === "1~3년" ? 1
+        : experienceText === "3~5년" ? 3
+        : 5;
+
+    // localStorage에 저장
+    localStorage.setItem("job_role", jobRole);
+    localStorage.setItem("tech_stack", JSON.stringify(techStack));
+    localStorage.setItem("experience_years", experienceYears);
+});
 </script>
 </body>
 </html>
