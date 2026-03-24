@@ -1,8 +1,6 @@
 import json
 import re
 
-from bson import ObjectId
-
 from app.domain.feedback.schema import (
     FeedbackResponse, QuestionFeedbackResponse,
     PostureSummaryResponse)
@@ -41,6 +39,8 @@ async def get_feedback(interview_id: str) -> FeedbackResponse:
 
     # feedbacks 컬렉션에서 면접 id로 조회
     doc = await db["feedbacks"].find_one({"interview_id": interview_id})
+    if doc is None:  # 피드백 데이터 에러!
+        raise ValueError(f"피드백 데이터를 찾을 수 없습니다: {interview_id}")
     feedback_doc = FeedbackDocument(**doc)          # 피드백 데이터
     interview = await _get_interview(interview_id)  # 면접 데이터 (schema)
 
@@ -51,14 +51,22 @@ async def get_feedback(interview_id: str) -> FeedbackResponse:
 async def get_history(user_id: str) -> list[FeedbackResponse]:
     db = get_database()
 
-    # feedbacks 컬렉션에서 유저 id로 모든 피드백 조회
-    # (find는 포인터기 때문에 to_list로 실제 데이터 꺼내기/ length: 몇개까지 가져올지)
+    # feedbacks 컬렉션에서 유저 id로 모든 피드백 조회/ docs: db에서 가져온 딕셔너리 목록
+    # (find는 포인터기 때문에 to_list로 실제 데이터 리스트로 꺼내기/ length: 몇개까지 가져올지)
     docs = await db["feedbacks"].find({"user_id": user_id}).to_list(length=None)
 
+    feedback_docs = [FeedbackDocument(**doc) for doc in docs]  # **: 딕셔너리를 풀어서 인자로 전달
+    interview_ids = [f.interview_id for f in feedback_docs]    # feedbacks에서 interview_id 목록 추출
+
+    # 추천해주신 $in로 interview 한 번에 조회 후 딕셔너리로 변환
+    interview_list = await db["interviews"].find({"_id": {"$in": interview_ids}}).to_list(length=None)
+    interviews = {doc["_id"]: InterviewDocument(**doc) for doc in interview_list}
+
     result = []
-    for doc in docs:
-        feedback_doc = FeedbackDocument(**doc)
-        interview = await _get_interview(feedback_doc.interview_id)
+    for feedback_doc in feedback_docs:
+        interview = interviews.get(feedback_doc.interview_id)
+        if interview is None:
+            continue  # 면접 데이터가 없는 피드백 스킵!(거의 없는 경우인데 db 정리하다 생길수있음)
         result.append(_to_response(feedback_doc, interview))
 
     return result
@@ -69,7 +77,10 @@ async def get_history(user_id: str) -> list[FeedbackResponse]:
 # 면접 데이터들 가져오기
 async def _get_interview(session_id: str) -> InterviewDocument:
     db = get_database()
-    doc = await db["interviews"].find_one({"_id": ObjectId(session_id)})
+    # 영진님이 id를 mongo db id가 아닌 uuid로 받으셔서 수정
+    doc = await db["interviews"].find_one({"_id": session_id})
+    if doc is None: # 면접 데이터 에러!
+        raise ValueError(f"면접 데이터를 찾을 수 없습니다: {session_id}")
     return InterviewDocument(**doc) # **: 딕셔너리를 풀어서 인자로 전달
 
 
@@ -94,17 +105,26 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
 
     # Gemini 호출(채팅 세션 불필요, 피드백 생성은 대화형이 아니라 분석용이라 단발성)
     client = get_client()
-    response = await client.aio.models.generate_content(
-        model="gemini-3.1-flash-lite-preview",
-        contents=prompt,
-    )
+    try:
+        response = await client.aio.models.generate_content(
+            model="gemini-3.1-flash-lite-preview",
+            contents=prompt,
+        )
+    except Exception as e:   # gemini 호출 실패 에러!
+        raise RuntimeError(f"Gemini API 호출에 실패했습니다. 잠시 후 다시 시도해주세요: {e}")
 
     # gemini 응답이 마크다운 껍데기에 싸여서 나오는 경우 대비하여 파싱 코드
     # 파싱: 텍스트를 프로그램이 쓸 수 있는 구조로 변환하는것
-    raw = response.text.strip()                 # gemini 응답 텍스트 꺼내기
-    raw = re.sub(r"^```(?:json)?\s*", "", raw)  # 앞쪽 ```json -> 빈 문자열로 대체
-    raw = re.sub(r"\s*```$", "", raw).strip()   # 뒤쪽 ``` -> 빈 문자열로 대체
-    data = json.loads(raw)                      # 'json 문자열' -> {python 딕셔너리}
+    raw = response.text.strip()       # gemini 응답 텍스트 꺼내기
+    try:
+        data = json.loads(raw)        # 깔끔한 json이면 바로 딕셔너리 파싱
+    except json.JSONDecodeError:      # json이 아니라 마크다운에 싸여있는 경우    
+        raw = re.sub(r"^```(?:json)?\s*", "", raw)    # 앞쪽 ```json -> 빈 문자열로 대체
+        raw = re.sub(r"\s*```$", "", raw).strip()     # 뒤쪽 ``` -> 빈 문자열로 대체
+        try:
+            data = json.loads(raw)                    # 'json 문자열' -> {python 딕셔너리}
+        except json.JSONDecodeError as e:             # json 파싱 실패 에러!
+            raise ValueError(f"Gemini 응답을 JSON으로 파싱할 수 없습니다: {e}")
 
     question_feedbacks = []
     # qf: 리스트 원소 하나하나/ "question_feedbacks": gemini 응답 json 키 이름, db 필드 이름
@@ -117,6 +137,7 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
             )
         )
 
+    # 딕셔너리로 만들어야 항목별로 꺼내서 AiFeedback 객체(Pydantic) 생성 가능
     return AiFeedback(
         interview_score=data["interview_score"],
         technical_score=data["technical_score"],
@@ -206,6 +227,6 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
 # mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:
     db = get_database()
-    # model_dump: mongo db라서 딕셔너리로 변환
+    # model_dump: 모델 객체들을 mongo db가 받을 수 있는 딕셔너리로 변환
     result = await db["feedbacks"].insert_one(feedback.model_dump())
     return str(result.inserted_id) # mongo db id 이상하게 생겨서 str로 변환 필요
