@@ -57,3 +57,15 @@ async def start_page(request: Request):
 @app.get("/")
 async def root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/register")
+async def register_page(request: Request):
+    return templates.TemplateResponse("pages/register.html", {"request": request}) 
+
+@app.get("/mypage")
+async def mypage_page(request: Request):
+    return templates.TemplateResponse("pages/mypage.html", {"request": request})
+
+@app.get("/login")
+async def login_page(request: Request):
+    return templates.TemplateResponse("pages/login.html", {"request": request})
