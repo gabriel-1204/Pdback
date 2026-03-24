@@ -26,7 +26,7 @@
 
       <div class="input-group">
         <label>직무 선택</label>
-        <div class="radio-group">
+        <div class="radio-group" id="job-role-group">
           <div class="radio-mock selected">백엔드</div>
           <div class="radio-mock">프론트엔드</div>
           <div class="radio-mock">풀스택</div>
@@ -37,17 +37,13 @@
 
       <div class="input-group">
         <label>기술 스택</label>
-        <input type="text" placeholder="기술 스택을 검색하세요...">
         <div class="stack-tags">
-          <div class="suggest-tag">Python ✕</div>
-          <div class="suggest-tag">FastAPI ✕</div>
-          <div class="suggest-tag">MongoDB ✕</div>
         </div>
       </div>
 
       <div class="input-group">
         <label>경력 연차</label>
-        <div class="radio-group">
+        <div class="radio-group" id="experience-group">
           <div class="radio-mock selected">신입</div>
           <div class="radio-mock">1~3년</div>
           <div class="radio-mock">3~5년</div>
@@ -61,29 +57,202 @@
           <div class="perm-item">
             <div class="perm-icon">📷</div>
             <div>카메라</div>
-            <div class="perm-status">✓ 허용됨</div>
+            <div class="perm-status">확인 중...</div>
           </div>
           <div class="perm-item">
             <div class="perm-icon">🎤</div>
             <div>마이크</div>
-            <div class="perm-status">✓ 허용됨</div>
+            <div class="perm-status">확인 중...</div>
           </div>
         </div>
       </div>
 
-      <a href="/interview"> <button class="btn-primary" style="margin-top: 16px;">면접 시작하기</button></a>
+      <button class="btn-primary" style="margin-top: 16px;">면접 시작하기</button>
     </div>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll(".radio-group").forEach(group => {
-    group.querySelectorAll(".radio-mock").forEach(item => {
-      item.addEventListener("click", () => {
-        group.querySelectorAll(".radio-mock").forEach(i => i.classList.remove("selected"));
-        item.classList.add("selected");
-      });
+  // ========================================
+  // 1. 직무별 기술 스택 목록
+  // ========================================
+  // 직무마다 다른 기술 스택 목록 정의
+  const STACK_BY_ROLE = {
+    '백엔드':     ['Python', 'Java', 'Node.js', 'FastAPI', 'Spring', 'Django',
+                  'MySQL', 'PostgreSQL', 'MongoDB', 'Redis', 'Docker', 'AWS'],
+    '프론트엔드': ['JavaScript', 'TypeScript', 'React', 'Vue', 'Angular',
+                  'Next.js', 'HTML', 'CSS', 'Tailwind', 'Webpack'],
+    '풀스택':     ['JavaScript', 'TypeScript', 'React', 'Next.js', 'Node.js',
+                  'Python', 'FastAPI', 'MySQL', 'MongoDB', 'Docker'],
+    '데이터':     ['Python', 'R', 'SQL', 'Pandas', 'NumPy', 'TensorFlow',
+                  'PyTorch', 'Spark', 'Hadoop', 'Tableau', 'AWS'],
+    'DevOps':    ['Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Jenkins',
+                  'GitHub Actions', 'Terraform', 'Linux', 'Nginx', 'Kafka'],
+  };
+
+  // 현재 선택된 기술 스택 배열 (API 전송할 때 사용)
+  const techStacks = [];
+
+  // HTML 요소 가져오기
+  const stackTagsContainer = document.querySelector('.stack-tags');
+
+  // ========================================
+  // 2. 기술 스택 선택 버튼 렌더링 함수
+  // ========================================
+  // 직무 선택 시 해당 직무의 기술 스택 버튼 목록을 화면에 그려줌
+const renderStackButtons = (role) => {
+  techStacks.length = 0;
+  stackTagsContainer.innerHTML = '';
+
+  const stacks = STACK_BY_ROLE[role] || [];
+
+  stacks.forEach(stackName => {
+    const btn = document.createElement('div');
+    btn.className = 'radio-mock'; // ← suggest-tag 에서 radio-mock 으로 변경
+    btn.textContent = stackName;
+
+    btn.addEventListener('click', () => {
+      if (techStacks.includes(stackName)) {
+        // 선택 해제
+        const index = techStacks.indexOf(stackName);
+        techStacks.splice(index, 1);
+        btn.classList.remove('selected');
+      } else {
+        // 최대 3개 제한
+        if (techStacks.length >= 3) {
+          alert('기술 스택은 최대 3개까지 선택 가능합니다.');
+          return;
+        }
+        // 선택
+        techStacks.push(stackName);
+        btn.classList.add('selected');
+      }
     });
+
+    stackTagsContainer.appendChild(btn);
+  });
+};
+  // ========================================
+  // 3. 직무 선택 클릭 이벤트
+  // ========================================
+  const jobRoleGroup = document.querySelector('#job-role-group');
+
+  jobRoleGroup.querySelectorAll('.radio-mock').forEach(item => {
+    item.addEventListener('click', () => {
+      // 직무 선택 토글
+      jobRoleGroup.querySelectorAll('.radio-mock').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+
+      // 선택된 직무에 맞는 기술 스택 버튼 렌더링
+      renderStackButtons(item.textContent);
+    });
+  });
+
+  // ========================================
+  // 4. 경력 연차 선택 클릭 이벤트
+  // ========================================
+  const experienceGroup = document.querySelector('#experience-group');
+
+  experienceGroup.querySelectorAll('.radio-mock').forEach(item => {
+    item.addEventListener('click', () => {
+      experienceGroup.querySelectorAll('.radio-mock').forEach(i => i.classList.remove('selected'));
+      item.classList.add('selected');
+    });
+  });
+
+  // ========================================
+  // 5. 페이지 로드 시 기본값 렌더링 (백엔드)
+  // ========================================
+  // 처음 페이지 열면 백엔드가 선택된 상태이므로 백엔드 스택 먼저 보여줌
+  renderStackButtons('백엔드');
+
+
+// ========================================
+// 6. 카메라/마이크 권한 요청
+// ========================================
+// 카메라/마이크 상태 텍스트 요소 가져오기
+const permItems = document.querySelectorAll('.perm-item');
+const cameraStatus = permItems[0].querySelector('.perm-status');
+const micStatus = permItems[1].querySelector('.perm-status');
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then((stream) => {
+    cameraStatus.textContent = '✓ 허용됨';
+    stream.getTracks().forEach(track => track.stop());
+  })
+  .catch(() => {
+    cameraStatus.textContent = '✗ 거부됨';
+  });
+
+navigator.mediaDevices.getUserMedia({ audio: true })
+  .then((stream) => {
+    micStatus.textContent = '✓ 허용됨';
+    stream.getTracks().forEach(track => track.stop());
+  })
+  .catch(() => {
+    micStatus.textContent = '✗ 거부됨';
+  });
+
+  // ========================================
+  // 7. 면접 시작하기 버튼 → API 호출
+  // ========================================
+  const startBtn = document.querySelector('.btn-primary');
+
+  startBtn.addEventListener('click', async () => {
+    // 직무 선택값 가져오기
+    const jobRole = jobRoleGroup.querySelector('.radio-mock.selected')?.textContent;
+
+    // 경력 선택값 가져오기
+    const experienceText = experienceGroup.querySelector('.radio-mock.selected')?.textContent;
+
+    // 경력 텍스트 → 숫자로 변환 (백엔드 API 가 int 를 받기 때문)
+    const experienceMap = { '신입': 0, '1~3년': 1, '3~5년': 3, '5년 이상': 5 };
+    const experienceYears = experienceMap[experienceText] ?? 0;
+
+    // 유효성 검사
+    if (!jobRole) {
+      alert('직무를 선택해주세요.');
+      return;
+    }
+    if (techStacks.length === 0) {
+      alert('기술 스택을 1개 이상 선택해주세요.');
+      return;
+    }
+    if (cameraStatus.textContent !== '✓ 허용됨') {
+      alert('카메라 권한을 허용해주세요.');
+      return;
+    }
+    if (micStatus.textContent !== '✓ 허용됨') {
+      alert('마이크 권한을 허용해주세요.');
+      return;
+    }
+    // 중복 클릭 방지
+    startBtn.disabled = true;
+    startBtn.textContent = '면접 준비 중...';
+
+    try {
+      // 백엔드 API 호출
+      const response = await fetch('/api/v1/interview/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_role: jobRole,
+          tech_stack: techStacks,
+          experience_years: experienceYears,
+        }),
+      });
+
+      if (!response.ok) throw new Error('서버 오류');
+        const data = await response.json();
+
+      // session_id 를 URL 파라미터로 넘겨서 면접 페이지로 이동
+      window.location.href = `/pages/interview.html?session_id=${data.session_id}`;
+
+    } catch (error) {
+      alert('면접 시작에 실패했습니다. 다시 시도해주세요.');
+      startBtn.disabled = false;
+      startBtn.textContent = '면접 시작하기';
+    }
   });
 </script>
 </body>
