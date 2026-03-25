@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Answer(BaseModel):
@@ -16,6 +16,7 @@ class Answer(BaseModel):
 
 class Question(BaseModel):
     """면접 질문 (답변 중첩 포함)"""
+    model_config = ConfigDict(protected_namespaces=())
 
     question_number: int
     question_content: str

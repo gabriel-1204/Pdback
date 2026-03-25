@@ -69,3 +69,11 @@ async def mypage_page(request: Request):
 @app.get("/login")
 async def login_page(request: Request):
     return templates.TemplateResponse("pages/login.html", {"request": request})
+
+@app.get("/feedback")
+async def feedback_page(request: Request):
+    return templates.TemplateResponse("pages/feedback.html", {"request": request})
+
+@app.get("/history")
+async def history_page(request: Request):
+    return templates.TemplateResponse("pages/history.html", {"request": request})

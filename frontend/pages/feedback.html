@@ -14,91 +14,133 @@
     <a href="interview-setup.html">면접 시작</a>
     <a href="history.html">히스토리</a>
     <a href="mypage.html">마이페이지</a>
-    <a href="login.html">로그인</a>
+    <a href="login.html" id="nav-auth-link">로그인</a>
   </div>
 </nav>
 
 <div class="page-container">
   <div class="page-content">
-    <div class="feedback-header">
-      <h2>면접 피드백 리포트</h2>
-      <p class="text-muted">-- | -- · -- · --</p>
+
+    <!-- 로딩 -->
+    <div id="loading-state" class="loading-overlay">
+      <div class="spinner"></div>
+      <span>AI 피드백을 분석 중입니다...</span>
     </div>
 
-    <!-- 점수 카드 -->
-    <div class="score-cards">
-      <div class="score-card tech">
-        <div class="score-label">기술 정확도</div>
-        <div class="score-value">-<span class="score-max"> / 10</span></div>
-      </div>
-      <div class="score-card logic">
-        <div class="score-label">논리 구성력</div>
-        <div class="score-value">-<span class="score-max"> / 10</span></div>
-      </div>
-      <div class="score-card attitude">
-        <div class="score-label">태도 점수</div>
-        <div class="score-value">-<span class="score-max"> / 10</span></div>
-      </div>
+    <!-- 에러 -->
+    <div id="error-state" class="error-box" style="display:none;">
+      <p id="error-message">오류가 발생했습니다.</p>
+      <button class="btn-secondary" style="margin-top:16px;" onclick="window.history.back()">뒤로 가기</button>
     </div>
 
-    <!-- 점수 차트 -->
-    <div style="background:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:24px;border:1px solid #eee;">
-      <h3 style="font-size:14px;margin-bottom:16px;">항목별 점수 분포</h3>
-      <div class="bar-chart">
-        <div class="bar-item">
-          <div class="bar" style="height:0px;background:linear-gradient(180deg,#4A6CF7,#6c9fff);"></div>
-          <div class="bar-label">기술</div>
+    <!-- 피드백 콘텐츠 (로드 후 표시) -->
+    <div id="feedback-content" style="display:none;">
+
+      <div class="feedback-header">
+        <h2>면접 피드백 리포트</h2>
+        <p class="text-muted" id="feedback-subtitle">로딩 중...</p>
+      </div>
+
+      <!-- 점수 카드 -->
+      <div class="score-cards">
+        <div class="score-card tech">
+          <div class="score-label">기술 정확도</div>
+          <div class="score-value">
+            <span id="tech-score">-</span><span class="score-max"> / 10</span>
+          </div>
         </div>
-        <div class="bar-item">
-          <div class="bar" style="height:0px;background:linear-gradient(180deg,#2ed573,#7bed9f);"></div>
-          <div class="bar-label">논리</div>
+        <div class="score-card logic">
+          <div class="score-label">논리 구성력</div>
+          <div class="score-value">
+            <span id="logic-score">-</span><span class="score-max"> / 10</span>
+          </div>
         </div>
-        <div class="bar-item">
-          <div class="bar" style="height:0px;background:linear-gradient(180deg,#ff6348,#ff9f80);"></div>
-          <div class="bar-label">태도</div>
-        </div>
-        <div class="bar-item">
-          <div class="bar" style="height:0px;background:linear-gradient(180deg,#ffa502,#ffd06b);"></div>
-          <div class="bar-label">시선</div>
-        </div>
-        <div class="bar-item">
-          <div class="bar" style="height:0px;background:linear-gradient(180deg,#a55eea,#d4a5ff);"></div>
-          <div class="bar-label">자세</div>
+        <div class="score-card attitude">
+          <div class="score-label">태도 점수</div>
+          <div class="score-value">
+            <span id="attitude-score">-</span><span class="score-max"> / 10</span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 강점 -->
-    <div class="feedback-section">
-      <h3>💪 강점</h3>
-      <ul class="feedback-list">
-        <!-- API 응답으로 채워집니다 -->
-      </ul>
-    </div>
-
-    <!-- 개선점 -->
-    <div class="feedback-section">
-      <h3>📝 개선점</h3>
-      <ul class="feedback-list">
-        <!-- API 응답으로 채워집니다 -->
-      </ul>
-    </div>
-
-    <!-- 모범답안 -->
-    <div class="feedback-section">
-      <h3>📌 모범답안</h3>
-      <div class="model-answer">
-        <h4>Q. --</h4>
-        <p>--</p>
+      <!-- 점수 차트 -->
+      <div class="chart-section">
+        <h3>항목별 점수 분포</h3>
+        <div class="bar-chart">
+          <div class="bar-item">
+            <div class="bar-value" id="bar-val-tech">-</div>
+            <div class="bar" id="bar-tech" style="height:0px;background:linear-gradient(180deg,#4A6CF7,#6c9fff);transition:height 0.6s ease;"></div>
+            <div class="bar-label">기술</div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-value" id="bar-val-logic">-</div>
+            <div class="bar" id="bar-logic" style="height:0px;background:linear-gradient(180deg,#2ed573,#7bed9f);transition:height 0.6s ease;"></div>
+            <div class="bar-label">논리</div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-value" id="bar-val-keyword">-</div>
+            <div class="bar" id="bar-keyword" style="height:0px;background:linear-gradient(180deg,#ffa502,#ffd06b);transition:height 0.6s ease;"></div>
+            <div class="bar-label">키워드</div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-value" id="bar-val-eyes">-</div>
+            <div class="bar" id="bar-eyes" style="height:0px;background:linear-gradient(180deg,#ff6348,#ff9f80);transition:height 0.6s ease;"></div>
+            <div class="bar-label">시선</div>
+          </div>
+          <div class="bar-item">
+            <div class="bar-value" id="bar-val-posture">-</div>
+            <div class="bar" id="bar-posture" style="height:0px;background:linear-gradient(180deg,#a55eea,#d4a5ff);transition:height 0.6s ease;"></div>
+            <div class="bar-label">자세</div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div style="display:flex;gap:12px;justify-content:center;margin-top:32px;">
-      <a href="history.html"><button class="btn-primary" style="width:auto;">히스토리에서 보기</button></a>
-      <a href="interview-setup.html"><button class="btn-secondary">새 면접 시작</button></a>
-    </div>
+      <!-- 종합 코멘트 -->
+      <div class="overall-comment">
+        <div class="comment-label">💬 종합 평가</div>
+        <p id="interview-comment">-</p>
+      </div>
+
+      <!-- 태도 코멘트 -->
+      <div class="posture-comment-box">
+        <div class="comment-label">🎯 태도 분석</div>
+        <p id="posture-comment">-</p>
+      </div>
+
+      <!-- 강점 -->
+      <div class="feedback-section">
+        <h3>💪 강점</h3>
+        <ul class="feedback-list" id="strengths-list">
+          <!-- JS로 채워집니다 -->
+        </ul>
+      </div>
+
+      <!-- 개선점 -->
+      <div class="feedback-section">
+        <h3>📝 개선점</h3>
+        <ul class="feedback-list" id="improvements-list">
+          <!-- JS로 채워집니다 -->
+        </ul>
+      </div>
+
+      <!-- 질문별 피드백 -->
+      <div class="feedback-section">
+        <h3>📌 질문별 상세 피드백</h3>
+        <div id="question-feedbacks">
+          <!-- JS로 채워집니다 -->
+        </div>
+      </div>
+
+      <div class="feedback-actions">
+        <a href="history.html" class="btn-primary">히스토리에서 보기</a>
+        <a href="interview-setup.html" class="btn-secondary">새 면접 시작</a>
+      </div>
+
+    </div><!-- /feedback-content -->
+
   </div>
 </div>
 
+<script src="../js/feedback.js"></script>
 </body>
 </html>
