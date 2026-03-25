@@ -1,5 +1,6 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Literal
 
 
 class UserDocument(BaseModel):
@@ -20,10 +21,10 @@ class UserDocument(BaseModel):
     last_login: datetime | None = None
 
     # AI 면접관련
-    position: str | None = Field(default=None, description="희망직무")
+    position: Literal["backend", "frontend", "fullstack", "data","devops"] | None = Field(default=None, description="희망 직무")
 
     # 보안(JWT)
     refresh_token: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
