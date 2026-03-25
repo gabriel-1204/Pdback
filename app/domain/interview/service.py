@@ -13,6 +13,7 @@ from app.domain.interview.schema import (
     InterviewStartResponse,
 )
 from app.services.gemini import create_chat_session, ask_question
+from google.genai import types
 
 MAX_QUESTIONS = 5
 # 면접 세션을 생성하고 첫 질문을 반환한다.
@@ -113,9 +114,15 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
     #    대화 이력을 Gemini history 형식으로 변환
     history = []
     for q in questions:
-        history.append({"role": "model", "parts": [q["question_content"]]})
+        history.append(types.Content(
+            role="model",
+            parts=[types.Part(text=q["question_content"])]
+        ))
         if q.get("answer"):
-            history.append({"role": "user", "parts": [q["answer"]["answer_content"]]})
+            history.append(types.Content(
+                role="user",
+                parts=[types.Part(text=q["answer"]["answer_content"])]
+            ))
 
     # 세션의 system_prompt 재생성 (Gemini는 대화 상태를 저장하지 않음)
 
@@ -124,8 +131,14 @@ async def submit_answer(request: AnswerRequest) -> AnswerResponse:
         experience_years=doc["career_years"],
         history=history)
     
-    follow_up_question = await ask_question(chat, request.answer_content)
+    current_question = questions[current_question_number - 1]["question_content"]
 
+    follow_up_question = await ask_question(
+        chat,
+        get_followup_prompt(current_question, request.answer_content)
+    )
+
+    
     # 5. 꼬리질문을 새 Question으로 MongoDB에 저장
     new_question = Question(
         question_number=current_question_number + 1,
