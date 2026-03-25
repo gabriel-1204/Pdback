@@ -1,6 +1,8 @@
 import json
 import re
 
+from fastapi import HTTPException
+
 from app.domain.feedback.schema import (
     FeedbackResponse, QuestionFeedbackResponse,
     PostureSummaryResponse)
@@ -34,7 +36,7 @@ async def create_feedback(session_id: str, user_id: str) -> FeedbackResponse:
 
 
 # 피드백 결과 조회 (feedback.html)
-async def get_feedback(interview_id: str) -> FeedbackResponse:
+async def get_feedback(interview_id: str, user_id: str) -> FeedbackResponse:
     db = get_database()
 
     # feedbacks 컬렉션에서 면접 id로 조회
@@ -42,6 +44,11 @@ async def get_feedback(interview_id: str) -> FeedbackResponse:
     if doc is None:  # 피드백 데이터 에러!
         raise ValueError(f"피드백 데이터를 찾을 수 없습니다: {interview_id}")
     feedback_doc = FeedbackDocument(**doc)          # 피드백 데이터
+
+    # (추가) 소유자 검증: 본인 피드백만 조회 가능
+    if feedback_doc.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 피드백만 조회할 수 있습니다.")
+
     interview = await _get_interview(interview_id)  # 면접 데이터 (schema)
 
     return _to_response(feedback_doc, interview)

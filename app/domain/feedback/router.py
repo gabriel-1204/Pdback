@@ -26,8 +26,8 @@ async def api_get_history(current_user: str = Depends(get_current_user)):
 # 피드백 상세 페이지 (면접 1건 : 피드백 1건)
 # /feedback/{interview_id}
 @router.get("/{interview_id}", response_model=FeedbackResponse)
-async def api_get_feedback(interview_id: str, _: str = Depends(get_current_user)):
-    return await get_feedback(interview_id)
+async def api_get_feedback(interview_id: str, current_user: str = Depends(get_current_user)):
+    return await get_feedback(interview_id, current_user)
 
 # 모든 라우터들 로그인한 상태에서만 가능하게 막아놓음
 # 현재: 본인 피드백/ 히스토리만 열람 가능
