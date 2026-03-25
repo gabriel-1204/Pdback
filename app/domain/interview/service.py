@@ -3,7 +3,7 @@ from datetime import datetime
 
 from app.database import get_database
 from app.domain.interview.models import Answer, InterviewDocument, Question
-from app.domain.interview.prompt import build_system_prompt, get_first_question_prompt
+from app.domain.interview.prompt import build_system_prompt, get_first_question_prompt, get_followup_prompt
 from fastapi import HTTPException
 
 from app.domain.interview.schema import (
@@ -61,10 +61,11 @@ async def start_interview(request: InterviewStartRequest) -> InterviewStartRespo
     # 4. 응답 반환
     return InterviewStartResponse(
         session_id=session_id,
+        intro_message=get_first_question_prompt(),
         question=first_question,
     )
 
-    #raise NotImplementedError
+    
 
 #답변을 분석하고 꼬리 질문을 생성한다.
 async def submit_answer(request: AnswerRequest) -> AnswerResponse:

@@ -52,6 +52,7 @@ async function startInterview() {
     });
     const data = await res.json();
     sessionIdInput.value = data.session_id;
+    addAIBubble(data.intro_message);
     addAIBubble(data.question);
 }
 

@@ -13,6 +13,7 @@ class InterviewStartResponse(BaseModel):
     """면접 시작 응답 — 첫 질문 반환"""
 
     session_id: str
+    intro_message: str
     question: str
 
 

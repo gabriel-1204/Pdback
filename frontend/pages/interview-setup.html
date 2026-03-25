@@ -247,7 +247,7 @@ navigator.mediaDevices.getUserMedia({ audio: true })
 
       // session_id 를 URL 파라미터로 넘겨서 면접 페이지로 이동
       window.location.href = `/pages/interview.html?session_id=${data.session_id}`;
-
+      
     } catch (error) {
       alert('면접 시작에 실패했습니다. 다시 시도해주세요.');
       startBtn.disabled = false;
@@ -256,7 +256,7 @@ navigator.mediaDevices.getUserMedia({ audio: true })
   });
 
 
-  document.querySelector(".btn-primary").addEventListener("click", () => {
+    document.querySelector(".btn-primary").addEventListener("click", () => {
     // 직무 선택
     const jobRole = document.querySelector(".radio-group:nth-of-type(1) .radio-mock.selected")?.textContent ?? "백엔드";
 
