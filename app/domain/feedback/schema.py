@@ -1,8 +1,11 @@
-from pydantic import BaseModel
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 # schema.py: API 요청/응답 모양 (클라이언트한테 보내는 데이터)
 class QuestionFeedbackResponse(BaseModel):
     """질문별 피드백 응답 — models.QuestionFeedback 대응"""
+    model_config = ConfigDict(protected_namespaces=())
 
     question_number: int
     score: float
@@ -55,3 +58,5 @@ class FeedbackResponse(BaseModel):
 
     # 자세/태도 데이터 (단일 attitude_score → 세분화된 구조로 변경)
     posture_summary: PostureSummaryResponse
+
+    created_at: datetime
