@@ -1,16 +1,15 @@
 from datetime import datetime, timezone
-
 from bson import ObjectId
 from fastapi import HTTPException
-
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import create_access_token, hash_password, verify_password, create_refresh_token, decode_token
 from app.database import get_database
 from app.domain.user.schemas import UserResponse
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 # 회원가입
 # 이메일(아이디) 체크- 중복방지, 비밀번호해시, 디비저장, 토큰, 포지션(선택값)
-async def register(username:str, email:str, password:str, position:str|None = None) -> str:
+async def register(username:str, email:str, password:str, position:str|None = None) -> dict:
     """이메일 중복 확인 후 회원가입 처리"""
     db = get_database()
 
@@ -31,13 +30,22 @@ async def register(username:str, email:str, password:str, position:str|None = No
         "last_login" : None,
         "position" : position,
         "refresh_token" : None,})
+    
     user_id = str(result.inserted_id)
-    token = create_access_token({"sub":user_id})
-    return token
+    access_token = create_access_token({"sub": user_id})
+    refresh_token = create_refresh_token({"sub": user_id})
+
+    # DB에 refresh_token 저장
+    await db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"refresh_token": refresh_token}})
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
+
 
 # 로그인
 # 사용자 찾고 비밀번호 확인- 이메일/비번 오류, 사용자 없을 시 에러발생, 토큰
-async def login(email:str, password:str) -> str:
+async def login(email:str, password:str) -> dict: #토큰 두개 반환되어 str->dict
     """이메일/비밀번호 확인 후 엑세스 토큰 반환"""
     db = get_database()
     user = await db["users"].find_one({"email" : email})
@@ -50,9 +58,15 @@ async def login(email:str, password:str) -> str:
         raise HTTPException(status_code=401, detail="이메일 또는 비밀번호가 잘못되었습니다.")
 
     user_id = str(user["_id"])
-    await db["users"].update_one({"_id" : ObjectId(user_id)}, {"$set" : {"last_login" : datetime.now(timezone.utc)}})
-    token = create_access_token({"sub" : user_id})
-    return token
+    access_token = create_access_token({"sub": user_id})
+    refresh_token = create_refresh_token({"sub": user_id})
+    
+    # DB에 last_login, refresh_token 저장
+    await db["users"].update_one(
+        {"_id" : ObjectId(user_id)},
+        {"$set" : {"last_login" : datetime.now(timezone.utc),"refresh_token": refresh_token }})
+
+    return {"access_token": access_token, "refresh_token": refresh_token}
 
 
 # 로그아웃 : 리프레시토큰을 none으로
@@ -100,6 +114,7 @@ async def update_me(user_id:str, username: str | None = None, position: str | No
             raise HTTPException(status_code=400, detail="현재 비밀번호를 입력해주세요.")
         if not verify_password(current_password, user["password_hash"]):
             raise HTTPException(status_code=400, detail="현재 비밀번호가 일치하지 않습니다.")
+        
         fields["password_hash"] = hash_password(new_password)
 
     await db["users"].update_one({"_id":ObjectId(user_id)}, {"$set":fields})
@@ -125,3 +140,31 @@ async def delete_me(user_id:str, password : str) -> dict:
         raise HTTPException(status_code=404, detail="탈퇴한 계정입니다.")
 
     return {"message":"회원탈퇴가 완료되었습니다."}
+
+# 리프레시 토큰 - 새토큰발급해서 자동 로그인 연장
+async def refresh(refresh_token: str) -> dict:
+    """리프레시 토큰 검증 후 새 엑세스 토큰 발급"""
+    try:
+        payload = decode_token(refresh_token)
+        user_id = payload["sub"]
+
+    except (ExpiredSignatureError, InvalidTokenError):
+        raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
+
+    db = get_database()
+    user = await db["users"].find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
+    # DB에 저장된 토큰과 비교해서 일치할때만 발급
+    if user["refresh_token"] != refresh_token:
+        raise HTTPException(status_code=401, detail="유효하지 않은 리프레시 토큰입니다.")
+
+    new_access_token = create_access_token({"sub": user_id})
+    new_refresh_token = create_refresh_token({"sub": user_id})
+
+    await db["users"].update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"last_login": datetime.now(timezone.utc),"refresh_token": new_refresh_token}})
+
+    return {"access_token": new_access_token, "refresh_token": new_refresh_token}
