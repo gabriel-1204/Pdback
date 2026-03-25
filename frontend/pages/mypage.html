@@ -54,7 +54,18 @@
               </div>
               <div class="input-group">
                 <label for="input-email">이메일</label>
-                <input id="input-email" type="email" placeholder="이메일" disabled style="color:#bbb;">
+                <input id="input-email" type="email" placeholder="이메일" disabled class="input-disabled">
+              </div>
+              <div class="input-group">
+                <label for="input-position">희망 직무</label>
+                <select id="input-position">
+                  <option value="">선택 안 함</option>
+                  <option value="backend">backend</option>
+                  <option value="frontend">frontend</option>
+                  <option value="fullstack">fullstack</option>
+                  <option value="data">data</option>
+                  <option value="devops">devops</option>
+                </select>
               </div>
               <div class="input-group">
                 <label for="input-current-password">현재 비밀번호</label>
@@ -68,26 +79,42 @@
                 <label for="input-confirm-password">새 비밀번호 확인(8자 이상)</label>
                 <input id="input-confirm-password" type="password" placeholder="새 비밀번호 확인">
               </div>
-              <div style="display:flex;gap:12px;margin-top:8px;">
-                <button type="submit" class="btn-primary" style="width:auto;padding:10px 32px;">저장</button>
+              <div class="form-btn-group">
+                <button type="submit" class="btn-primary">저장</button>
                 <button type="button" id="btn-cancel" class="btn-secondary">취소</button>
               </div>
             </form>
             <div class="divider"></div>
-            <div style="display:flex;justify-content:flex-end;">
-              <button id="btn-withdraw" class="btn-danger" style="font-size:13px;padding:8px 16px;">회원 탈퇴</button>
+            <div class="form-footer">
+              <button id="btn-withdraw" class="btn-danger">회원 탈퇴</button>
             </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- 회원탈퇴 비밀번호 확인 모달 -->
+    <div id="modal-withdraw" class="modal-overlay">
+      <div class="modal-box">
+        <h3>회원 탈퇴</h3>
+        <p>비밀번호를 입력해주세요.</p>
+        <div class="input-group">
+          <input id="modal-password" type="password" placeholder="비밀번호">
+        </div>
+        <div class="modal-btn-group">
+          <button id="modal-cancel" class="btn-secondary">취소</button>
+          <button id="modal-confirm" class="btn-danger">탈퇴</button>
+        </div>
+      </div>
+    </div>
+
     <script>
+    (function() {
       //로그인할 때 저장된 토큰 가져오기
       const token = localStorage.getItem('token');
 
       //토큰이 없음=로그인 하지않음 , 로그인페이지로 이동
-      if (!token) window.location.href = 'login.html';
+      if (!token) { window.location.href = 'login.html'; return; }
 
       //사용자 정보 로드(내 정보 가져와서 보여주기 작업)
       //토큰이 있으면 로그인한 사람 - 없으면 로그인 안한사람
@@ -109,6 +136,7 @@
           document.getElementById('profile-position').textContent = '희망 직무 : ' + (user.position || '--'); //직무
           document.getElementById('input-username').value = user.username; //이름 수정 폼 입력칸
           document.getElementById('input-email').value = user.email; //이메일 수정불가능 , 그냥 현재 이메일(아이디) 보여주기
+          document.getElementById('input-position').value = user.position || ''; //희망 직무 선택
         } catch (error) {
           alert('사용자 정보를 불러오는 데 실패했습니다.');
         }
@@ -124,6 +152,7 @@
         e.preventDefault();
 
         const username = document.getElementById('input-username').value;
+        const position = document.getElementById('input-position').value || undefined;
         const currentPassword = document.getElementById('input-current-password').value;
         const newPassword = document.getElementById('input-new-password').value;
         const confirmPassword = document.getElementById('input-confirm-password').value;
@@ -150,6 +179,7 @@
             },
             body: JSON.stringify({
               username,
+              position,
               current_password: currentPassword || undefined, //변경된 값있으면 전송, 없으면 제외
               new_password: newPassword || undefined,
             })
@@ -188,14 +218,32 @@
         window.location.href = 'login.html'; //로그인페이지 이동
       });
 
-      //회원 탈퇴
-      document.getElementById('btn-withdraw').addEventListener('click', async () => {
+      //회원 탈퇴 - 모달 열기
+      document.getElementById('btn-withdraw').addEventListener('click', () => {
         if (!confirm('정말 탈퇴하시겠습니까?')) return;
+        const modal = document.getElementById('modal-withdraw');
+        modal.style.display = 'flex';
+        document.getElementById('modal-password').value = '';
+      });
+
+      //모달 취소
+      document.getElementById('modal-cancel').addEventListener('click', () => {
+        document.getElementById('modal-withdraw').style.display = 'none';
+      });
+
+      //모달 탈퇴 확인
+      document.getElementById('modal-confirm').addEventListener('click', async () => {
+        const password = document.getElementById('modal-password').value;
+        if (!password) { alert('비밀번호를 입력해주세요.'); return; }
 
         try {
           const response = await fetch('/api/v1/auth/me', {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password })
           });
 
           if (!response.ok) {
@@ -213,6 +261,7 @@
       
       //토큰 있으면 사용자 정보 화면에 표시
       loadUserInfo();
+    })();
     </script>
   </body>
 </html>
