@@ -67,11 +67,8 @@
         if (!username) { alert('이름을 입력해주세요.'); return; }
         if (!email) { alert('이메일을 입력해주세요.'); return; }
         if (!password) { alert('비밀번호를 입력해주세요.'); return; }
-
-        if (password !== passwordConfirm) {
-          alert('비밀번호가 일치하지 않습니다.');
-          return;
-        }
+        if (password.length < 8) { alert('비밀번호는 8자 이상 입력해주세요.'); return; }
+        if (password !== passwordConfirm) {alert('비밀번호가 일치하지 않습니다.'); return; }
 
         //백엔드 API 연동
         try {
