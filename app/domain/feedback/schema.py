@@ -21,6 +21,15 @@ class PostureSummaryResponse(BaseModel):
     posture_comment: str
 
 
+class HistoryResponse(BaseModel):
+    """히스토리 목록 페이지네이션 응답"""
+
+    items: list["FeedbackResponse"]
+    total: int   # 전체 피드백 수
+    page: int    # 현재 페이지
+    size: int    # 페이지당 항목 수
+
+
 class FeedbackRequest(BaseModel):
     """종합 피드백 생성 요청"""
 

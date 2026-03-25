@@ -1,9 +1,11 @@
 import json
 import re
 
+from fastapi import HTTPException
+
 from app.domain.feedback.schema import (
     FeedbackResponse, QuestionFeedbackResponse,
-    PostureSummaryResponse)
+    PostureSummaryResponse, HistoryResponse)
 from app.domain.feedback.models import (
     AiFeedback, PostureSummary,
     FeedbackDocument, QuestionFeedback)
@@ -14,10 +16,20 @@ from app.database import get_database
 
 
 # === router.py 함수 3개
-# 피드백 생성 메인 함수
 async def create_feedback(session_id: str, user_id: str) -> FeedbackResponse:
+    """피드백 생성 메인 함수"""
+    # 이미 생성된 피드백이 있다면 차단
+    db = get_database()
+    existing = await db["feedbacks"].find_one({"interview_id": session_id})
+    if existing:
+        raise HTTPException(status_code=409, detail="이미 생성된 피드백이 존재합니다. 히스토리 페이지를 참고해주세요.")
 
     interview = await _get_interview(session_id)          # 면접 데이터
+
+    # 소유자 검증: 본인 면접에 대한 피드백만 생성 가능
+    if interview.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 면접에 대한 피드백만 생성할 수 있습니다.")
+
     ai_feedback = await _generate_ai_feedback(interview)  # ai 피드백
     posture_summary = _process_posture(interview)         # 자세/태도 데이터
 
@@ -33,32 +45,42 @@ async def create_feedback(session_id: str, user_id: str) -> FeedbackResponse:
     return _to_response(feedback_doc, interview)   # 응답 형태로 변환
 
 
-# 피드백 결과 조회 (feedback.html)
-async def get_feedback(interview_id: str) -> FeedbackResponse:
+async def get_feedback(interview_id: str, user_id: str) -> FeedbackResponse:
+    """피드백 결과 조회 (feedback.html)"""
     db = get_database()
 
     # feedbacks 컬렉션에서 면접 id로 조회
     doc = await db["feedbacks"].find_one({"interview_id": interview_id})
     if doc is None:  # 피드백 데이터 에러!
-        raise ValueError(f"피드백 데이터를 찾을 수 없습니다: {interview_id}")
+        raise HTTPException(status_code=404, detail="피드백 데이터를 찾을 수 없습니다.")
     feedback_doc = FeedbackDocument(**doc)          # 피드백 데이터
+
+    # (추가) 소유자 검증: 본인 피드백만 조회 가능
+    if feedback_doc.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 피드백만 조회할 수 있습니다.")
+
     interview = await _get_interview(interview_id)  # 면접 데이터 (schema)
 
     return _to_response(feedback_doc, interview)
 
 
-# 히스토리 목록 조회 (history.html)
-async def get_history(user_id: str) -> list[FeedbackResponse]:
+async def get_history(user_id: str, page: int = 1, size: int = 10) -> HistoryResponse:
+    """히스토리 목록 조회 (history.html)"""
     db = get_database()
 
-    # feedbacks 컬렉션에서 유저 id로 모든 피드백 조회/ docs: db에서 가져온 딕셔너리 목록
-    # (find는 포인터기 때문에 to_list로 실제 데이터 리스트로 꺼내기/ length: 몇개까지 가져올지)
-    docs = await db["feedbacks"].find({"user_id": user_id}).to_list(length=None)
+    total = await db["feedbacks"].count_documents({"user_id": user_id})  # 전체 개수
+    skip = (page - 1) * size
+
+    # feedbacks 컬렉션에서 유저 id로 피드백 조회, 최신순 정렬
+    # skip: 건너뛸 수, limit: 가져올 수
+    docs = await db["feedbacks"].find({"user_id": user_id}) \
+        .sort("created_at", -1) \
+        .skip(skip).limit(size).to_list(length=None)
 
     feedback_docs = [FeedbackDocument(**doc) for doc in docs]  # **: 딕셔너리를 풀어서 인자로 전달
     interview_ids = [f.interview_id for f in feedback_docs]    # feedbacks에서 interview_id 목록 추출
 
-    # 추천해주신 $in로 interview 한 번에 조회 후 딕셔너리로 변환
+    # $in으로 interview 한 번에 조회 후 딕셔너리로 변환
     interview_list = await db["interviews"].find({"_id": {"$in": interview_ids}}).to_list(length=None)
     interviews = {doc["_id"]: InterviewDocument(**doc) for doc in interview_list}
 
@@ -69,23 +91,23 @@ async def get_history(user_id: str) -> list[FeedbackResponse]:
             continue  # 면접 데이터가 없는 피드백 스킵!(거의 없는 경우인데 db 정리하다 생길수있음)
         result.append(_to_response(feedback_doc, interview))
 
-    return result
+    return HistoryResponse(items=result, total=total, page=page, size=size)
 
 
 
 # === service.py 내부 함수 5개
-# 면접 데이터들 가져오기
 async def _get_interview(session_id: str) -> InterviewDocument:
+    """면접 데이터들 가져오기"""
     db = get_database()
     # 영진님이 id를 mongo db id가 아닌 uuid로 받으셔서 수정
     doc = await db["interviews"].find_one({"_id": session_id})
     if doc is None: # 면접 데이터 에러!
-        raise ValueError(f"면접 데이터를 찾을 수 없습니다: {session_id}")
+        raise HTTPException(status_code=404, detail="면접 데이터를 찾을 수 없습니다.")
     return InterviewDocument(**doc) # **: 딕셔너리를 풀어서 인자로 전달
 
 
-# gemini 여기서 한번 호출해서 필요한거 다 받기
 async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
+    """gemini 호출해서 필요한 데이터 받기"""
     # interview에서 질문/답변 목록 추출
     questions = [q.question_content for q in interview.questions]
     answers = []
@@ -110,8 +132,10 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
             model="gemini-3.1-flash-lite-preview",
             contents=prompt,
         )
-    except Exception as e:   # gemini 호출 실패 에러!
-        raise RuntimeError(f"Gemini API 호출에 실패했습니다. 잠시 후 다시 시도해주세요: {e}")
+    except HTTPException:
+        raise
+    except Exception:   # gemini 호출 실패 에러!
+        raise HTTPException(status_code=502, detail="AI 피드백 생성에 실패했습니다. 잠시 후 다시 시도해주세요.")
 
     # gemini 응답이 마크다운 껍데기에 싸여서 나오는 경우 대비하여 파싱 코드
     # 파싱: 텍스트를 프로그램이 쓸 수 있는 구조로 변환하는것
@@ -123,35 +147,38 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
         raw = re.sub(r"\s*```$", "", raw).strip()     # 뒤쪽 ``` -> 빈 문자열로 대체
         try:
             data = json.loads(raw)                    # 'json 문자열' -> {python 딕셔너리}
-        except json.JSONDecodeError as e:             # json 파싱 실패 에러!
-            raise ValueError(f"Gemini 응답을 JSON으로 파싱할 수 없습니다: {e}")
+        except json.JSONDecodeError:             # json 파싱 실패 에러!
+            raise HTTPException(status_code=502, detail="AI 응답 처리에 실패했습니다. 잠시 후 다시 시도해주세요.")
 
-    question_feedbacks = []
-    # qf: 리스트 원소 하나하나/ "question_feedbacks": gemini 응답 json 키 이름, db 필드 이름
-    for qf in data["question_feedbacks"]:
-        question_feedbacks.append(
-            QuestionFeedback(
-                question_number=qf["question_number"],
-                score=qf["score"],
-                comment=qf["comment"],
+    try:
+        question_feedbacks = []
+        # qf: 리스트 원소 하나하나/ "question_feedbacks": gemini 응답 json 키 이름, db 필드 이름
+        for qf in data["question_feedbacks"]:
+            question_feedbacks.append(
+                QuestionFeedback(
+                    question_number=qf["question_number"],
+                    score=qf["score"],
+                    comment=qf["comment"],
+                )
             )
+
+        # 딕셔너리로 만들어야 항목별로 꺼내서 AiFeedback 객체(Pydantic) 생성 가능
+        return AiFeedback(
+            interview_score=data["interview_score"],
+            technical_score=data["technical_score"],
+            logic_score=data["logic_score"],
+            keyword_score=data["keyword_score"],
+            interview_comment=data["interview_comment"],
+            strengths=data["strengths"],
+            improvements=data["improvements"],
+            question_feedbacks=question_feedbacks,
         )
-
-    # 딕셔너리로 만들어야 항목별로 꺼내서 AiFeedback 객체(Pydantic) 생성 가능
-    return AiFeedback(
-        interview_score=data["interview_score"],
-        technical_score=data["technical_score"],
-        logic_score=data["logic_score"],
-        keyword_score=data["keyword_score"],
-        interview_comment=data["interview_comment"],
-        strengths=data["strengths"],
-        improvements=data["improvements"],
-        question_feedbacks=question_feedbacks,
-    )
+    except KeyError:
+        raise HTTPException(status_code=502, detail="AI 응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요.")
 
 
-# 자세/태도 데이터 받은거 피드백으로 가공
 def _process_posture(interview) -> PostureSummary:
+    """자세/태도 데이터 받은거 피드백으로 가공"""
     posture_score = interview.posture_safety_rate
     eyes_score = interview.eye_contact
     attitude_score = round(eyes_score * 0.4 + posture_score * 0.6, 1)
@@ -184,9 +211,9 @@ def _process_posture(interview) -> PostureSummary:
     )
 
 
-# DB 데이터 -> 응답 변환
 # 수정, 검토중
 def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> FeedbackResponse:
+    """DB 데이터 -> 응답 변환"""
     # question_number 기준으로 model_answer 매핑 딕셔너리 생성
     model_answers = {q.question_number: q.model_answer for q in interview.questions}
     question_contents = {q.question_number: q.question_content for q in interview.questions}
@@ -224,8 +251,8 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
     )
 
 
-# mongo db에 피드백 저장
 async def _save_feedback(feedback: FeedbackDocument) -> str:
+    """mongo db에 피드백 저장"""
     db = get_database()
     # model_dump: 모델 객체들을 mongo db가 받을 수 있는 딕셔너리로 변환
     result = await db["feedbacks"].insert_one(feedback.model_dump())
