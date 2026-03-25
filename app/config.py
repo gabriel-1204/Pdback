@@ -6,8 +6,9 @@ class Settings(BaseSettings):
     # Gemini API
     GEMINI_API_KEY: str = ""
 
-    #JWT
-    SECRET_KEY: str = ""
+    # JWT
+    # 기본값 제거, .env에 값이 있어야 작동
+    SECRET_KEY: str
     
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"

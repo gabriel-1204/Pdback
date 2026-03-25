@@ -24,7 +24,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 #access_token 발급
 def create_access_token(data: dict) -> str:
     encode_data = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(hours=2) #minutes, hours, days로 변경
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30) #minutes, hours, days로 변경, 리프레시 토큰 구현 후 연장 예정
     encode_data.update({"exp": expire})
     return encode(encode_data, SECRET_KEY, algorithm=ALGORITHM)
 
