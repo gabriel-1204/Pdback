@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 # schema.py: API 요청/응답 모양 (클라이언트한테 보내는 데이터)
@@ -55,3 +57,5 @@ class FeedbackResponse(BaseModel):
 
     # 자세/태도 데이터 (단일 attitude_score → 세분화된 구조로 변경)
     posture_summary: PostureSummaryResponse
+
+    created_at: datetime

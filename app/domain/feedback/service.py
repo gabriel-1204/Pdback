@@ -248,6 +248,7 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
         improvements=doc.ai_feedback.improvements,
         question_feedbacks=question_feedbacks,
         posture_summary=posture_summary,
+        created_at=doc.created_at,
     )
 
 
