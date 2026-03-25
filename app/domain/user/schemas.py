@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Literal
-
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -46,3 +45,15 @@ class UserUpdate(BaseModel):
 class UserDelete(BaseModel):
     """회원탈퇴 시 비밀번호 재확인 스키마"""
     password: str
+
+
+# 6. 리프레시 토큰 재발급 요청
+class TokenRefresh(BaseModel):
+    """리프레시 토큰 재발급 요청 스키마"""
+    refresh_token: str
+
+# 7. 토큰 응답값
+class TokenResponse(BaseModel):
+    """엑세스 토큰, 리프레시 토큰 응답 스키마"""
+    access_token: str
+    refresh_token: str
