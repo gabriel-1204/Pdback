@@ -25,6 +25,11 @@ async def create_feedback(session_id: str, user_id: str) -> FeedbackResponse:
         raise HTTPException(status_code=409, detail="이미 생성된 피드백이 존재합니다. 히스토리 페이지를 참고해주세요.")
 
     interview = await _get_interview(session_id)          # 면접 데이터
+
+    # 소유자 검증: 본인 면접에 대한 피드백만 생성 가능
+    if interview.user_id != user_id:
+        raise HTTPException(status_code=403, detail="본인의 면접에 대한 피드백만 생성할 수 있습니다.")
+
     ai_feedback = await _generate_ai_feedback(interview)  # ai 피드백
     posture_summary = _process_posture(interview)         # 자세/태도 데이터
 
@@ -66,13 +71,16 @@ async def get_history(user_id: str, page: int = 1, size: int = 10) -> HistoryRes
     total = await db["feedbacks"].count_documents({"user_id": user_id})  # 전체 개수
     skip = (page - 1) * size
 
-    # feedbacks 컬렉션에서 유저 id로 피드백 조회/ skip: 건너뛸 수, limit: 가져올 수
-    docs = await db["feedbacks"].find({"user_id": user_id}).skip(skip).limit(size).to_list(length=None)
+    # feedbacks 컬렉션에서 유저 id로 피드백 조회, 최신순 정렬
+    # skip: 건너뛸 수, limit: 가져올 수
+    docs = await db["feedbacks"].find({"user_id": user_id}) \
+        .sort("created_at", -1) \
+        .skip(skip).limit(size).to_list(length=None)
 
     feedback_docs = [FeedbackDocument(**doc) for doc in docs]  # **: 딕셔너리를 풀어서 인자로 전달
     interview_ids = [f.interview_id for f in feedback_docs]    # feedbacks에서 interview_id 목록 추출
 
-    # 추천해주신 $in로 interview 한 번에 조회 후 딕셔너리로 변환
+    # $in으로 interview 한 번에 조회 후 딕셔너리로 변환
     interview_list = await db["interviews"].find({"_id": {"$in": interview_ids}}).to_list(length=None)
     interviews = {doc["_id"]: InterviewDocument(**doc) for doc in interview_list}
 
@@ -124,6 +132,8 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
             model="gemini-3.1-flash-lite-preview",
             contents=prompt,
         )
+    except HTTPException:
+        raise
     except Exception:   # gemini 호출 실패 에러!
         raise HTTPException(status_code=502, detail="AI 피드백 생성에 실패했습니다. 잠시 후 다시 시도해주세요.")
 

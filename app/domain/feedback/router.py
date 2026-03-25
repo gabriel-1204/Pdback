@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.domain.feedback.schema import (
     FeedbackRequest, FeedbackResponse, HistoryResponse)
@@ -9,7 +9,7 @@ from app.domain.user.dependency import get_current_user
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
 
 # /feedback/generate
-@router.post("/generate", response_model=FeedbackResponse)
+@router.post("/generate", response_model=FeedbackResponse, status_code=201)
 async def api_generate_feedback(request: FeedbackRequest, current_user: str = Depends(get_current_user)):
     """면접 종료 후 피드백 생성 페이지"""
     return await create_feedback(request.session_id, current_user)
@@ -19,7 +19,10 @@ async def api_generate_feedback(request: FeedbackRequest, current_user: str = De
 # 본인 history만 열람가능 (타인것 X)
 # /feedback/history
 @router.get("/history", response_model=HistoryResponse)
-async def api_get_history(page: int = 1, size: int = 10, current_user: str = Depends(get_current_user)):
+async def api_get_history(
+    page: int = Query(default=1, ge=1),          # 1 이상만 허용
+    size: int = Query(default=10, ge=1, le=100), # 1~100만 허용
+    current_user: str = Depends(get_current_user)):
     """유저별 히스토리 페이지"""
     return await get_history(current_user, page, size)
 
