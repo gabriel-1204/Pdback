@@ -25,7 +25,7 @@ async def create_chat_session(
     job_role: str,  # 직무명
     tech_stack: list[str], # 기술 스택
     experience_years: int, # 경력
-    history: list | None = None
+    history: list[dict] | None = None
 ):
     """면접관 페르소나가 설정된 Gemini 대화 세션 생성"""
     history = history or []

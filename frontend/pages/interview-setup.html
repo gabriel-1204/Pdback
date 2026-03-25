@@ -144,7 +144,7 @@
       item.classList.add('selected');
 
       // 선택된 직무에 맞는 기술 스택 버튼 렌더링
-      renderStackButtons(item.textContent);
+      renderStackButtons(item.textContent.trim());
     });
   });
 
@@ -175,8 +175,12 @@ const permItems = document.querySelectorAll('.perm-item');
 const cameraStatus = permItems[0].querySelector('.perm-status');
 const micStatus = permItems[1].querySelector('.perm-status');
 
+let isCameraAllowed = false;
+let isMicAllowed = false;
+
 navigator.mediaDevices.getUserMedia({ video: true })
   .then((stream) => {
+    isCameraAllowed = true;
     cameraStatus.textContent = '✓ 허용됨';
     stream.getTracks().forEach(track => track.stop());
   })
@@ -186,21 +190,24 @@ navigator.mediaDevices.getUserMedia({ video: true })
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then((stream) => {
+    isMicAllowed = true;
     micStatus.textContent = '✓ 허용됨';
     stream.getTracks().forEach(track => track.stop());
   })
   .catch(() => {
     micStatus.textContent = '✗ 거부됨';
   });
-
+  // ========================================
+  // 7. 면접 시작하기 버튼 클릭 이벤트
+  // ========================================
   const startBtn = document.querySelector('.btn-primary');
 
   startBtn.addEventListener('click', () => {
     // 직무 선택값 가져오기
-    const jobRole = jobRoleGroup.querySelector('.radio-mock.selected')?.textContent;
+    const jobRole = jobRoleGroup.querySelector('.radio-mock.selected')?.textContent.trim();
 
     // 경력 선택값 가져오기
-    const experienceText = experienceGroup.querySelector('.radio-mock.selected')?.textContent;
+    const experienceText = experienceGroup.querySelector('.radio-mock.selected')?.textContent.trim();
 
     // 경력 텍스트 → 숫자로 변환 (백엔드 API 가 int 를 받기 때문)
     const experienceMap = { '신입': 0, '1~3년': 1, '3~5년': 3, '5년 이상': 5 };
@@ -224,25 +231,30 @@ navigator.mediaDevices.getUserMedia({ audio: true })
       alert('마이크 권한 확인 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
-    if (cameraStatus.textContent !== '✓ 허용됨') {
+    if (!isCameraAllowed) {
       alert('카메라 권한을 허용해주세요.');
       return;
     }
-    if (micStatus.textContent !== '✓ 허용됨') {
+    if (!isMicAllowed) {
       alert('마이크 권한을 허용해주세요.');
       return;
     }
-    // 중복 클릭 방지
+    try {
+      // localStorage 저장 (시크릿 모드나 저장 공간 부족 시 예외 발생)
+      localStorage.setItem("job_role", jobRole);
+      localStorage.setItem("tech_stack", JSON.stringify(techStacks));
+      localStorage.setItem("experience_years", experienceYears);
+    } catch (error) {
+      alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    // localStorage 저장 성공 후에만 버튼 비활성화 → 이동
     startBtn.disabled = true;
     startBtn.textContent = '면접 준비 중...';
 
-    // localStorage에 선택값 저장
-    localStorage.setItem("job_role", jobRole);
-    localStorage.setItem("tech_stack", JSON.stringify(techStacks));
-    localStorage.setItem("experience_years", experienceYears);
-
     // 면접 페이지로 이동 (세션 생성은 sound_detection.js 에서 처리)
-    window.location.href = '/pages/interview.html';
+    window.location.href = '/interview';
   });
 </script>
 </body>
