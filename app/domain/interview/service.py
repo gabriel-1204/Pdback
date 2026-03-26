@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime
 
+from app.config import KST
+
 from fastapi import HTTPException
 from google.genai import types
 
@@ -42,7 +44,7 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
 
     # 3. 세션 id 발급, document 생성
     session_id = str(uuid.uuid4())
-    now = datetime.now()
+    now = datetime.now(KST)
 
     document = InterviewDocument(
         user_id=user_id,   # router에서 받은 실제 user_id 사용      
@@ -82,12 +84,14 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
 async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
     """답변을 분석하고 꼬리 질문을 생성합니다."""
     db = get_database()
-    now = datetime.now()
+    now = datetime.now(KST)
 
     # 1. MongoDB에서 세션 조회
     doc = await db["interviews"].find_one({"_id": request.session_id})
-    if doc["user_id"] != user_id:
+    if doc is None:
         raise HTTPException(status_code=404, detail=f"세션을 찾을 수 없습니다: {request.session_id}")
+    if doc["user_id"] != user_id:
+        raise HTTPException(status_code=403, detail="본인의 면접 세션만 접근할 수 있습니다.")
 
 
     questions: list[dict] = doc.get("questions", [])
@@ -98,6 +102,9 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
     # 현재 질문의 created_at = 사용자가 질문을 받은 시점 = 답변 시작 시점
     question_created_at = questions[current_question_number - 1]["created_at"]
     started_at = question_created_at if isinstance(question_created_at, datetime) else datetime.fromisoformat(str(question_created_at))
+    # MongoDB에서 읽어온 naive datetime에 KST 부여
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=KST)
     ended_at = now
     duration_seconds = int((ended_at - started_at).total_seconds())
 

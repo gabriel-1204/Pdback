@@ -12,22 +12,6 @@ function getToken() {
   return localStorage.getItem('access_token');
 }
 
-// 로그아웃 링크 연결
-window.logout = async function() {
-  const token = getToken();
-  try {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-  } catch (error) {
-    // 로그아웃 요청 실패해도 토큰 삭제 후 로그인페이지 이동
-  }
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  window.location.href = '/login';
-}
-
 function scoreClass(score, max) {
   const ratio = score / max;
   if (ratio >= 0.7) return 'high';

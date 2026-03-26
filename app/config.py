@@ -1,5 +1,10 @@
+from datetime import timezone, timedelta
+
 from pydantic_settings import BaseSettings
 from pathlib import Path
+
+# 한국 표준시 (KST = UTC+9)
+KST = timezone(timedelta(hours=9))
 # Base_Diractory
 BASE_DIR = Path(__file__).resolve().parent.parent
 class Settings(BaseSettings):

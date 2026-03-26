@@ -12,12 +12,12 @@
 <body>
 
 <nav class="nav">
-  <a href="../index.html" class="nav-logo">P:dback</a>
+  <a href="/" class="nav-logo">P:dback</a>
   <div class="nav-links">
     <a href="/start" class="active">면접 시작</a>
-    <a href="history.html">히스토리</a>
-    <a href="mypage.html">마이페이지</a>
-    <a href="login.html" id="auth-btn">로그인</a>
+    <a href="/history">히스토리</a>
+    <a href="/mypage">마이페이지</a>
+    <a href="/login" id="auth-btn">로그인</a>
   </div>
 </nav>
 
@@ -31,9 +31,9 @@
             <span class="status-dot green"></span>
             <span class="status-label">카메라 ON</span>
           </div>
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span class="status-dot blue"></span>
-            <span class="status-label">STT ON</span>
+          <div id="stt-status" style="display:flex;align-items:center;gap:4px;">
+            <span class="status-dot" id="stt-dot"></span>
+            <span class="status-label" id="stt-label">마이크 OFF</span>
           </div>
         </div>
         <div class="timer-badge">⏱ 00:00</div>
@@ -64,17 +64,18 @@
         <div class="chat-messages">
           <!-- 면접 시작 시 AI 질문이 여기에 추가됩니다 -->
         </div>
-        <div class="chat-input-area">
-          <div class="stt-indicator">
-            <div class="stt-wave">
-              <span></span><span></span><span></span><span></span><span></span>
-            </div>
-            <!-- 음성 텍스트 변환부분-->
-            <span id="interim-span"></span>
-            <span id="final-span"></span>
-          </div>
-          <button class="btn-danger" id="submit-btn">완료</button>
-        </div>
+      </div>
+    </div>
+
+    <!-- STT 입력 영역 (레이아웃 아래 전체 너비) -->
+    <div class="stt-bottom-area">
+      <div class="stt-text-box">
+          <span id="final-span"></span>
+        <span id="interim-span" style="color:#999;"></span>
+      </div>
+      <div class="stt-controls">
+        <span style="font-size:11px;color:#999;">스페이스바로도 시작/완료할 수 있습니다</span>
+        <button class="btn-primary" id="toggle-btn" disabled>답변 시작</button>
       </div>
     </div>
   </div>

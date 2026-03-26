@@ -1,4 +1,6 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+
+from app.config import KST
 from bson import ObjectId
 from fastapi import HTTPException
 from app.core.security import create_access_token, hash_password, verify_password, create_refresh_token, decode_token
@@ -18,7 +20,7 @@ async def register(username:str, email:str, password:str, position:str|None = No
         raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
 
     password_hash = hash_password(password)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(KST)
     result = await db["users"].insert_one({
         "username" : username,
         "email" : email,
@@ -64,7 +66,7 @@ async def login(email:str, password:str) -> dict: #토큰 두개 반환되어 st
     # DB에 last_login, refresh_token 저장
     await db["users"].update_one(
         {"_id" : ObjectId(user_id)},
-        {"$set" : {"last_login" : datetime.now(timezone.utc),"refresh_token": refresh_token }})
+        {"$set" : {"last_login" : datetime.now(KST),"refresh_token": refresh_token }})
 
     return {"access_token": access_token, "refresh_token": refresh_token}
 
@@ -106,7 +108,7 @@ async def update_me(
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
     # 기본필드
-    fields = {"updated_at" : datetime.now(timezone.utc)}
+    fields = {"updated_at" : datetime.now(KST)}
     if username is not None:
         fields["username"] = username
     
@@ -171,7 +173,7 @@ async def refresh(refresh_token: str) -> dict:
 
     await db["users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"last_login": datetime.now(timezone.utc),"refresh_token": new_refresh_token}})
+        {"$set": {"last_login": datetime.now(KST),"refresh_token": new_refresh_token}})
 
     return {"access_token": new_access_token, "refresh_token": new_refresh_token}
 
@@ -181,7 +183,7 @@ async def get_my_stats(user_id: str) -> dict:
 
     # 월~일 기준으로 일주일 잡았어요
     # 월0 화1 ~ 일6 숫자로 나오고 오늘 - 요일숫자 하면 이번주 월요일 날짜가 나와요.
-    today = datetime.now(timezone.utc)
+    today = datetime.now(KST)
     monday = today - timedelta(days=today.weekday())
     week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
 
