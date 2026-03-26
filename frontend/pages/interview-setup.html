@@ -167,36 +167,36 @@
   renderStackButtons('백엔드');
 
 
-// ========================================
-// 6. 카메라/마이크 권한 요청
-// ========================================
-// 카메라/마이크 상태 텍스트 요소 가져오기
-const permItems = document.querySelectorAll('.perm-item');
-const cameraStatus = permItems[0].querySelector('.perm-status');
-const micStatus = permItems[1].querySelector('.perm-status');
+  // ========================================
+  // 6. 카메라/마이크 권한 요청
+  // ========================================
+  // 카메라/마이크 상태 텍스트 요소 가져오기
+  const permItems = document.querySelectorAll('.perm-item');
+  const cameraStatus = permItems[0].querySelector('.perm-status');
+  const micStatus = permItems[1].querySelector('.perm-status');
 
-let isCameraAllowed = false;
-let isMicAllowed = false;
+  let isCameraAllowed = false;
+  let isMicAllowed = false;
 
-navigator.mediaDevices.getUserMedia({ video: true })
-  .then((stream) => {
-    isCameraAllowed = true;
-    cameraStatus.textContent = '✓ 허용됨';
-    stream.getTracks().forEach(track => track.stop());
-  })
-  .catch(() => {
-    cameraStatus.textContent = '✗ 거부됨';
-  });
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then((stream) => {
+      isCameraAllowed = true;
+      cameraStatus.textContent = '✓ 허용됨';
+      stream.getTracks().forEach(track => track.stop());
+    })
+    .catch(() => {
+      cameraStatus.textContent = '✗ 거부됨';
+    });
 
-navigator.mediaDevices.getUserMedia({ audio: true })
-  .then((stream) => {
-    isMicAllowed = true;
-    micStatus.textContent = '✓ 허용됨';
-    stream.getTracks().forEach(track => track.stop());
-  })
-  .catch(() => {
-    micStatus.textContent = '✗ 거부됨';
-  });
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then((stream) => {
+      isMicAllowed = true;
+      micStatus.textContent = '✓ 허용됨';
+      stream.getTracks().forEach(track => track.stop());
+    })
+    .catch(() => {
+      micStatus.textContent = '✗ 거부됨';
+    });
   // ========================================
   // 7. 면접 시작하기 버튼 클릭 이벤트
   // ========================================
@@ -253,9 +253,9 @@ navigator.mediaDevices.getUserMedia({ audio: true })
     startBtn.disabled = true;
     startBtn.textContent = '면접 준비 중...';
 
-   // 면접 페이지로 이동 (세션 생성은 sound_detection.js 에서 처리)
+    // 면접 페이지로 이동 (세션 생성은 sound_detection.js 에서 처리)
     window.location.href = '/interview';
-
+  });
 </script>
 </body>
 </html>
