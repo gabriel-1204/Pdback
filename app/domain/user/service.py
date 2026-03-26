@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 from fastapi import HTTPException
 from app.core.security import create_access_token, hash_password, verify_password, create_refresh_token, decode_token
@@ -174,3 +174,21 @@ async def refresh(refresh_token: str) -> dict:
         {"$set": {"last_login": datetime.now(timezone.utc),"refresh_token": new_refresh_token}})
 
     return {"access_token": new_access_token, "refresh_token": new_refresh_token}
+
+# 인터뷰
+async def get_my_stats(user_id: str) -> dict:
+    db = get_database()
+
+    # 월~일 기준으로 일주일 잡았어요
+    # 월0 화1 ~ 일6 숫자로 나오고 오늘 - 요일숫자 하면 이번주 월요일 날짜가 나와요.
+    today = datetime.now(timezone.utc)
+    monday = today - timedelta(days=today.weekday())
+    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 이번주 면접횟수
+    weekly_count = await db["interviews"].count_documents({
+        "user_id": user_id,
+        "created_at": {"$gte": week_start} #인터뷰컬렉션의 created_at
+    })
+
+    return {"weekly_interviews": weekly_count}
