@@ -1,7 +1,7 @@
-from datetime import timezone, timedelta
+from datetime import timedelta, timezone
+from pathlib import Path
 
 from pydantic_settings import BaseSettings
-from pathlib import Path
 
 # 한국 표준시 (KST = UTC+9)
 KST = timezone(timedelta(hours=9))
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Token
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7 #MINUTES로 관리하면 조금 더 세밀하게 조절가능
-    
+
     # MongoDB
     MONGODB_URL: str = "mongodb://localhost:27017"
     MONGODB_DB_NAME: str = "pdback"
@@ -34,7 +34,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
-    
+
     #templates
     TEMPLATES_DIR: str = str(BASE_DIR / "frontend")
 

@@ -1,7 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from app.config import KST
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.config import KST
 
 
 class UserDocument(BaseModel):

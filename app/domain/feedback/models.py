@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.config import KST
 
+
 # models.py: DB에 저장되는 구조 (mongo db 문서 모양)
 class QuestionFeedback(BaseModel):
     """질문별 개별 피드백"""

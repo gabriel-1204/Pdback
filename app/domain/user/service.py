@@ -1,12 +1,19 @@
 from datetime import datetime, timedelta
 
-from app.config import KST
 from bson import ObjectId
 from fastapi import HTTPException
-from app.core.security import create_access_token, hash_password, verify_password, create_refresh_token, decode_token
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+
+from app.config import KST
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 from app.database import get_database
 from app.domain.user.schemas import UserResponse
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 # 회원가입
@@ -32,7 +39,7 @@ async def register(username:str, email:str, password:str, position:str|None = No
         "last_login" : None,
         "position" : position,
         "refresh_token" : None,})
-    
+
     user_id = str(result.inserted_id)
     access_token = create_access_token({"sub": user_id})
     refresh_token = create_refresh_token({"sub": user_id})
@@ -62,7 +69,7 @@ async def login(email:str, password:str) -> dict: #토큰 두개 반환되어 st
     user_id = str(user["_id"])
     access_token = create_access_token({"sub": user_id})
     refresh_token = create_refresh_token({"sub": user_id})
-    
+
     # DB에 last_login, refresh_token 저장
     await db["users"].update_one(
         {"_id" : ObjectId(user_id)},
@@ -111,7 +118,7 @@ async def update_me(
     fields = {"updated_at" : datetime.now(KST)}
     if username is not None:
         fields["username"] = username
-    
+
     # 희망직무 수정
     if position is not None:
         fields["position"] = position
@@ -122,7 +129,7 @@ async def update_me(
             raise HTTPException(status_code=400, detail="현재 비밀번호를 입력해주세요.")
         if not verify_password(current_password, user["password_hash"]):
             raise HTTPException(status_code=400, detail="현재 비밀번호가 일치하지 않습니다.")
-        
+
         fields["password_hash"] = hash_password(new_password)
 
     await db["users"].update_one({"_id":ObjectId(user_id)}, {"$set":fields})
