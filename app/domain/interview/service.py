@@ -21,7 +21,10 @@ from app.domain.interview.schema import (
 )
 from app.services.gemini import create_chat_session, ask_question
 
-
+'''세션이 시작되면 첫 시작 문구가 뜨고, 첫 질문이 생성되어 뜬다. 
+그러면 내가 답변하고 답변한 시간이 기록된다. 그리고 다시 꼬리질문이 생성되어 뜬다.
+그러면 꼬리에 대한 답을 하고... 최대 질문수에 도달하면 음성인식이 멈추고 면접 한 세션이 종료된다.
+'''
 MAX_QUESTIONS = 5
 # 면접 세션을 생성하고 첫 질문을 반환한다.
 async def start_interview(request: InterviewStartRequest, user_id: str) -> InterviewStartResponse:
@@ -51,7 +54,7 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
                 question_number=1,
                 question_content=first_question,
                 category="기술",
-                expected_duration_seconds=60,
+                expected_duration_seconds=60, # 시간 1분으로 정함
                 created_at=now,
                 model_answer="",      # 추후 Gemini로 모범답안 생성 가능
                 question_keywords=[],
@@ -103,7 +106,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         stt_raw_text=request.stt_raw_text,
         started_at=started_at,   # 백엔드에서 현재 시간으로 처리
         ended_at=ended_at,
-        duration_seconds=duration_seconds, # ended_at - started_at
+        duration_seconds=duration_seconds,
         status="submitted",
     )
 
@@ -158,7 +161,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         question_number=current_question_number + 1,
         question_content=follow_up_question,
         category="기술",
-        expected_duration_seconds=60,
+        expected_duration_seconds=60, #시간 1분으로 정함
         created_at=now,
         model_answer="",
         question_keywords=[],
