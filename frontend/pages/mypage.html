@@ -14,7 +14,7 @@
         <a href="/start">면접 시작</a>
         <a href="/history">히스토리</a>
         <a href="/mypage" class="active">마이페이지</a>
-        <a href="#" onclick="logout()">로그아웃</a>
+        <a href="/login" id="auth-btn">로그인</a>
       </div>
     </nav>
 
@@ -114,7 +114,7 @@
       let token = localStorage.getItem('access_token');
 
       //토큰이 없음=로그인 하지않음 , 로그인페이지로 이동
-      if (!token) { window.location.href = '/login'; return; }
+      if (!token) { alert('로그인이 필요합니다.'); window.location.href = '/login'; return; }
 
       //사용자 정보 로드(내 정보 가져와서 보여주기 작업)
       //토큰이 있으면 로그인한 사람 - 없으면 로그인 안한사람
@@ -290,5 +290,6 @@
       loadUserInfo();
     })();
     </script>
+    <script src="/js/auth-nav.js"></script>
   </body>
 </html>
