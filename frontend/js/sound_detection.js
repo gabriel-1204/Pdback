@@ -111,11 +111,14 @@ if (!SpeechRecognition) {
     };
 
     recognition.onerror = function(event) {
-        if (interimSpan) interimSpan.textContent = "오류: " + event.error;
+        if (interimSpan){
+            interimSpan.textContent = "오류: " + event.error;
+            isStopped = true;}
     };
 
     recognition.onend = function() {
-        if (!isStopped) recognition.start();
+        if (!isStopped){
+            recognition.start();}
     };
 
     recognition.start();
