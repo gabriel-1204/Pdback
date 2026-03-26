@@ -45,7 +45,9 @@ async function startInterview() {
 try {
     const res = await fetch("/api/v1/interview/start", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+             "Authorization": `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
             job_role: jobRole,
             tech_stack: techStack,
