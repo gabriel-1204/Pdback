@@ -177,11 +177,11 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
         raise HTTPException(status_code=502, detail="AI 응답 형식이 올바르지 않습니다. 잠시 후 다시 시도해주세요.")
 
 
-def _process_posture(interview) -> PostureSummary:
+def _process_posture(interview: InterviewDocument) -> PostureSummary:
     """자세/태도 데이터 받은거 피드백으로 가공"""
     posture_score = interview.posture_safety_rate
     eyes_score = interview.eye_contact
-    attitude_score = round(eyes_score * 0.4 + posture_score * 0.6, 1)
+    attitude_score = round((eyes_score * 0.4 + posture_score * 0.6) / 10, 1)
 
     # 테스트 후 숫자 변경, 조건문 범위 변경 가능성 있음/ 단계: 부족-> 보통-> 완벽
     if eyes_score >= 80 and posture_score >= 80: # 전부 80 이상. 모두 완벽!

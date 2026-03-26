@@ -3,7 +3,23 @@ const API_BASE = '/api/v1';
 // ── 유틸 ─────────────────────────────────────────────────────────────
 
 function getToken() {
-  return localStorage.getItem('token');
+  return localStorage.getItem('access_token');
+}
+
+// 로그아웃 링크 연결
+window.logout = async function() {
+  const token = getToken();
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+  } catch (error) {
+    // 로그아웃 요청 실패해도 토큰 삭제 후 로그인페이지 이동(유선님따라 추가^^)
+  }
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  window.location.href = '/login';
 }
 
 function showError(msg) {
@@ -79,7 +95,7 @@ function renderFeedback(data) {
   // 점수 카드
   const techScore     = Number(data.technical_score).toFixed(1);
   const logicScore    = Number(data.logic_score).toFixed(1);
-  const attitudeScore = (data.posture_summary.attitude_score / 10).toFixed(1);
+  const attitudeScore = Number(data.posture_summary.attitude_score).toFixed(1);
 
   document.getElementById('tech-score').textContent     = techScore;
   document.getElementById('logic-score').textContent    = logicScore;

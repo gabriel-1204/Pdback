@@ -19,7 +19,7 @@ async def insert():
 
     await db['interviews'].insert_one({
         '_id': 'test-session-001',
-        'user_id': '69c3836a56fdf973437453c4',  # jwt.io -> 토큰 넣고 sub 값
+        'user_id': USER_ID,
         'position': '백엔드',
         'tech_stack': ['Python', 'FastAPI'],
         'career_years': 1,

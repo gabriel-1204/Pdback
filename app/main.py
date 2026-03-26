@@ -7,7 +7,7 @@ from app.api.v1.router import v1_router
 from app.config import settings
 from app.database import close_db, connect_db
 
-#탬플릿 설정
+# 탬플릿 설정
 templates = Jinja2Templates(directory=settings.TEMPLATES_DIR)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +25,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-#css 파일 마운트
+# css 파일 마운트
 app.mount("/css", StaticFiles(directory=settings.STATIC_DIR), name="css")
 # CORS 설정
 app.add_middleware(
@@ -44,7 +44,7 @@ app.mount("/js", StaticFiles(directory="frontend/js"), name="js")
 async def health_check():
     return {"status": "ok"}
 
-#인터뷰 html
+# 인터뷰 html
 @app.get("/interview")
 async def interview_page(request: Request):
     return templates.TemplateResponse("pages/interview.html", {"request": request, "db_name": settings.MONGODB_DB_NAME})
