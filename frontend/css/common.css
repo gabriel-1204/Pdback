@@ -334,6 +334,10 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 
 .btn-detail { color: #4A6CF7; font-size: 13px; font-weight: 600; text-decoration: none; }
 .btn-detail:hover { text-decoration: underline; }
+
+.badge-new { display: inline-block; background: #e8f0fe; color: #4A6CF7; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+.tr-new td { background: #f0f7ff; }
+.tr-new:hover td { background: #e6f0ff; }
 .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
 .pagination button { background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; transition: background 0.2s; }
 .pagination button:hover { background: #e0e0e0; }

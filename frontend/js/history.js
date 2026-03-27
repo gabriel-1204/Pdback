@@ -75,9 +75,13 @@ function renderTable(items) {
     const attitudeCls = scoreClass(item.posture_summary.attitude_score, 10);
     const avgCls      = scoreClass((item.interview_score + item.posture_summary.attitude_score) / 2, 10);
 
+    const isNew = (Date.now() - new Date(item.created_at).getTime()) < 10 * 60 * 1000;
+    const newBadge = isNew ? '<span class="badge-new">NEW</span>' : '';
+
     const tr = document.createElement('tr');
+    if (isNew) tr.className = 'tr-new';
     tr.innerHTML = `
-      <td>${date}</td>
+      <td>${date}${newBadge}</td>
       <td>${escapeHtml(item.position || '-')}</td>
       <td>${escapeHtml(techStack)}</td>
       <td>${escapeHtml(careerYears)}</td>

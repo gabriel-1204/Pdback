@@ -109,7 +109,7 @@ if (data.is_finished) {
     if (toggleBtn) toggleBtn.disabled = true;
     if (currentSession < MAX_SESSIONS) {
         addAIBubble(`${currentSession}/${MAX_SESSIONS} 세션 완료! 수고하셨습니다.`);
-        if (nextSessionBtn) nextSessionBtn.disabled = followUpCount < 5;
+        if (nextSessionBtn) nextSessionBtn.disabled = false;
     } else {
         addAIBubble(`모든 ${MAX_SESSIONS}개 세션이 종료되었습니다. 수고하셨습니다!`);
         localStorage.removeItem("current_session");
@@ -170,7 +170,23 @@ if (toggleBtn) {
 
 // 버튼 이벤트 등록부
 if (nextSessionBtn) {
-    nextSessionBtn.addEventListener("click", function () {
+    nextSessionBtn.addEventListener("click", async function () {
+        nextSessionBtn.disabled = true;
+        nextSessionBtn.textContent = "피드백 저장 중...";
+
+        try {
+            await fetch("/api/v1/feedback/generate", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem('access_token')}`
+                },
+                body: JSON.stringify({ session_id: sessionIdInput.value })
+            });
+        } catch (e) {
+            // 피드백 저장 실패해도 이동은 진행
+        }
+
         if (currentSession < MAX_SESSIONS) {
             localStorage.setItem("current_session", currentSession + 1);
             window.location.href = '/interview';
