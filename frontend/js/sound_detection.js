@@ -24,8 +24,10 @@ let questionNumber = 0;
 let followUpCount = 0;
 let currentSession = parseInt(localStorage.getItem("current_session") ?? "1");
 const MAX_QUESTIONS = 5;
-const MAX_SESSIONS = 2;
+const MAX_SESSIONS = parseInt(localStorage.getItem("max_sessions") ?? "1");
 const questionCounter = document.querySelector(".chat-header span");
+const sessionCounter = document.getElementById("session-counter");
+if (sessionCounter) sessionCounter.textContent = `세션 ${currentSession}/${MAX_SESSIONS}`;
 
 // AI 말풍선을 채팅창에 추가
 function addAIBubble(text) {

@@ -82,7 +82,19 @@ experienceGroup.querySelectorAll('.radio-mock').forEach(item => {
 });
 
 // ========================================
-// 5. 페이지 로드 시 기본값 렌더링 (백엔드)
+// 5. 세션 수 선택 클릭 이벤트
+// ========================================
+const sessionCountGroup = document.querySelector('#session-count-group');
+
+sessionCountGroup.querySelectorAll('.radio-mock').forEach(item => {
+  item.addEventListener('click', () => {
+    sessionCountGroup.querySelectorAll('.radio-mock').forEach(i => i.classList.remove('selected'));
+    item.classList.add('selected');
+  });
+});
+
+// ========================================
+// 6. 페이지 로드 시 기본값 렌더링 (백엔드)
 // ========================================
 renderStackButtons('백엔드');
 
@@ -151,10 +163,15 @@ startBtn.addEventListener('click', () => {
     alert('마이크 권한을 허용해주세요.');
     return;
   }
+  const sessionText = sessionCountGroup.querySelector('.radio-mock.selected')?.textContent.trim();
+  const sessionMap = { '1회': 1, '2회': 2, '3회': 3 };
+  const maxSessions = sessionMap[sessionText] ?? 1;
+
   try {
     localStorage.setItem("job_role", jobRole);
     localStorage.setItem("tech_stack", JSON.stringify(techStacks));
     localStorage.setItem("experience_years", experienceYears);
+    localStorage.setItem("max_sessions", maxSessions);
   } catch (error) {
     alert('저장 중 오류가 발생했습니다. 다시 시도해주세요.');
     return;
