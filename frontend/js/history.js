@@ -54,7 +54,7 @@ function renderTable(items) {
   if (!items || items.length === 0) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="text-align:center;color:#999;padding:40px;">
+        <td colspan="8" style="text-align:center;color:#999;padding:40px;">
           면접 기록이 없습니다
         </td>
       </tr>`;
@@ -62,23 +62,28 @@ function renderTable(items) {
   }
 
   items.forEach(item => {
-    const date         = new Date(item.created_at).toLocaleDateString('ko-KR', {
+    const date          = new Date(item.created_at).toLocaleDateString('ko-KR', {
       year: 'numeric', month: '2-digit', day: '2-digit'
     });
-    const techStack    = (item.tech_stack || []).join(', ') || '-';
-    const overallScore = Number(item.interview_score).toFixed(1);
+    const techStack     = (item.tech_stack || []).join(', ') || '-';
+    const careerYears   = item.career_years != null ? `${item.career_years}년` : '-';
+    const overallScore  = Number(item.interview_score).toFixed(1);
     const attitudeScore = Number(item.posture_summary.attitude_score).toFixed(1);
+    const avgScore      = ((item.interview_score + item.posture_summary.attitude_score) / 2).toFixed(1);
 
     const overallCls  = scoreClass(item.interview_score, 10);
     const attitudeCls = scoreClass(item.posture_summary.attitude_score, 10);
+    const avgCls      = scoreClass((item.interview_score + item.posture_summary.attitude_score) / 2, 10);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${date}</td>
       <td>${escapeHtml(item.position || '-')}</td>
       <td>${escapeHtml(techStack)}</td>
+      <td>${escapeHtml(careerYears)}</td>
       <td><span class="score-badge ${overallCls}">${overallScore}</span></td>
       <td><span class="score-badge ${attitudeCls}">${attitudeScore}</span></td>
+      <td><span class="score-badge ${avgCls}">${avgScore}</span></td>
       <td><a href="/feedback?id=${item.interview_id}" class="btn-detail">상세보기</a></td>
     `;
     tbody.appendChild(tr);
@@ -92,45 +97,51 @@ function renderTrendChart(items) {
     return;
   }
 
-  // 최신 5개만 자르고, 차트는 오래된 순(왼쪽→오른쪽)으로 뒤집기
   const CHART_LIMIT = 5;
+  const MAX_BAR_H = 110; // px
+  // 최신 5개 슬라이스 후 오래된 순(왼→오른)으로 정렬
   const sorted = [...items].slice(0, CHART_LIMIT).reverse();
 
-  const W = 600, H = 140;
-  const PAD = { top: 20, right: 20, bottom: 30, left: 30 };
-  const innerW = W - PAD.left - PAD.right;
-  const innerH = H - PAD.top - PAD.bottom;
-  const n = sorted.length;
+  // 평균 점수(AI 종합 + 태도 ÷ 2) 계산 후 최고점 인덱스 찾기
+  const scores = sorted.map(item =>
+    (item.interview_score + item.posture_summary.attitude_score) / 2
+  );
+  const maxScore = Math.max(...scores);
+  const maxIdx   = scores.indexOf(maxScore);
 
-  const points = sorted.map((item, i) => {
-    const x = PAD.left + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-    const y = PAD.top + innerH - (item.interview_score / 10) * innerH;
-    return { x, y, score: item.interview_score, date: item.created_at };
-  });
-
-  const polyline = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-
-  const circles = points.map(p => `
-    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#4A6CF7"/>
-    <text x="${p.x.toFixed(1)}" y="${(p.y - 8).toFixed(1)}" text-anchor="middle" font-size="11" fill="#444">${Number(p.score).toFixed(1)}</text>
-  `).join('');
-
-  const step = Math.max(1, Math.ceil(n / 5));
-  const xLabels = points
-    .filter((_, i) => i % step === 0 || i === n - 1)
-    .map(p => {
-      const d = new Date(p.date).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
-      return `<text x="${p.x.toFixed(1)}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#aaa">${d}</text>`;
-    }).join('');
+  const barItems = [];
+  for (let i = 0; i < CHART_LIMIT; i++) {
+    if (i < sorted.length) {
+      const item    = sorted[i];
+      const score   = scores[i];
+      const h       = Math.max(4, Math.round((score / 10) * MAX_BAR_H));
+      const date    = new Date(item.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+      const isBest  = sorted.length >= 2 && i === maxIdx;
+      const barBg   = isBest
+        ? 'linear-gradient(180deg,#ffa502,#ffd06b)'
+        : 'linear-gradient(180deg,#4A6CF7,#6c9fff)';
+      const crown   = isBest ? '<span style="font-size:12px;line-height:1;">👑</span>' : '';
+      barItems.push(`
+        <div class="bar-item">
+          <div class="bar-value" style="display:flex;flex-direction:column;align-items:center;gap:1px;">${crown}${score.toFixed(1)}</div>
+          <div class="bar" style="height:${h}px;background:${barBg};transition:height 0.6s ease;"></div>
+          <div class="bar-label">${date}</div>
+        </div>`);
+    } else {
+      barItems.push(`
+        <div class="bar-item">
+          <div class="bar-value" style="visibility:hidden;">-</div>
+          <div class="bar" style="height:4px;background:#eee;border-radius:8px 8px 0 0;"></div>
+          <div class="bar-label" style="color:#ddd;">-</div>
+        </div>`);
+    }
+  }
 
   container.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:100%;">
-      <polyline points="${polyline}" fill="none" stroke="#4A6CF7" stroke-width="2"/>
-      ${circles}
-      ${xLabels}
-      <text x="${W - PAD.right}" y="${PAD.top - 6}" text-anchor="end" font-size="10" fill="#bbb">최근 ${sorted.length}개 면접 기준</text>
-    </svg>
-  `;
+    <div style="width:100%;">
+      <div class="bar-chart">${barItems.join('')}</div>
+      <p style="text-align:right;font-size:13px;color:#bbb;margin-top:6px;">최신순으로 5개 면접 데이터만 표시됩니다.</p>
+    </div>`;
 }
 
 function renderPagination(total, page, size) {
@@ -177,7 +188,7 @@ async function load(page) {
     currentPage = page;  // API한테 현재 페이지 묻는 대신, 이 함수에서 직접 기억하기
     totalPages = Math.ceil((data.total || 0) / PAGE_SIZE);  // 전체 페이지 수 계산해서 저장
     renderTable(data.items);
-    renderTrendChart(data.items);
+    if (page === 1) renderTrendChart(data.items);
     renderPagination(data.total, currentPage, PAGE_SIZE);
   } catch (e) {
     document.getElementById('history-body').innerHTML = `
