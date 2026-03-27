@@ -24,4 +24,18 @@
         authBtn.textContent = '로그인';
         authBtn.href = '/login';
     }
+
+    // 랜딩 페이지 버튼 분기
+    const landingButtons = document.getElementById('landing-buttons');
+    if (landingButtons) {
+        if (token) {
+            landingButtons.innerHTML =
+                '<a href="/start"><button class="btn-primary">면접 시작하기</button></a>' +
+                '<a href="/history"><button class="btn-secondary">히스토리</button></a>';
+        } else {
+            landingButtons.innerHTML =
+                '<a href="/login"><button class="btn-primary">로그인</button></a>' +
+                '<a href="/register"><button class="btn-secondary">회원가입</button></a>';
+        }
+    }
 })();
