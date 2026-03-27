@@ -69,15 +69,14 @@
 
     <!-- STT 입력 영역 (레이아웃 아래 전체 너비) -->
     <div class="stt-bottom-area">
-      <div class="stt-text-box" style="display:flex;flex-direction:column;justify-content:space-between;">
+      <div class="stt-text-box">
           <span id="final-span"></span>
-          <div style="font-size:13px;color:#999;border-top:1px solid #eee;padding-top:4px;margin-top:auto;">
-            <span id="interim-span"></span>
-          </div>
+        <span id="interim-span" style="color:#999;"></span>
       </div>
       <div class="stt-controls">
         <span style="font-size:11px;color:#999;">스페이스바로도 시작/완료할 수 있습니다</span>
         <button class="btn-primary" id="toggle-btn" disabled>답변 시작</button>
+        <button class="btn-primary" id="next-session-btn" disabled>다음 세션 시작</button>
       </div>
     </div>
   </div>
