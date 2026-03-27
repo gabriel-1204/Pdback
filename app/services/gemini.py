@@ -42,8 +42,8 @@ async def create_chat_session(
         history=history or [],
         config=types.GenerateContentConfig(     #LLM에게 역할 설정
             system_instruction=system_prompt,   #시스템 프롬포트 주입
-            temperature=1.0,         # 답변 창의성 (0~1, 낮을수록 일관된 답변)
-            max_output_tokens=500,   # 최대 답변 길이
+            temperature=0.8,         # 답변 창의성 (0~1, 낮을수록 일관된 답변)
+            max_output_tokens=600,   # 최대 답변 길이
         ),
     )
 
