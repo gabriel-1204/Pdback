@@ -64,25 +64,25 @@ async function getFeedback(interviewId, token) {
 // ── 렌더링 ────────────────────────────────────────────────────────────
 
 function renderFeedback(data) {
-  // 헤더 서브타이틀 (localStorage에서 직무 정보 읽기)
-  const jobRole   = localStorage.getItem('job_role') || '-';
-  const techStack = (() => {
-    try { return JSON.parse(localStorage.getItem('tech_stack') || '[]'); } catch { return []; }
-  })();
-  const expYears  = localStorage.getItem('experience_years') ?? '-';
-
+  // 헤더 서브타이틀 (API 응답 데이터 사용)
   const interviewDate = new Date(data.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const techStack     = (data.tech_stack || []).join(', ') || '-';
+  const expYears      = data.career_years ?? '-';
 
   document.getElementById('feedback-subtitle').textContent =
-    `${interviewDate}  |  ${jobRole}  |  ${techStack.length ? techStack.join(', ') : '-'}  |  경력 ${expYears}년`;
+    `${interviewDate}  |  ${data.position || '-'}  |  ${techStack}  |  경력 ${expYears}년`;
 
   // 점수 카드
+  const overallScore  = Number(data.interview_score).toFixed(1);
   const techScore     = Number(data.technical_score).toFixed(1);
   const logicScore    = Number(data.logic_score).toFixed(1);
+  const keywordScore  = Number(data.keyword_score).toFixed(1);
   const attitudeScore = Number(data.posture_summary.attitude_score).toFixed(1);
 
+  document.getElementById('overall-score').textContent  = overallScore;
   document.getElementById('tech-score').textContent     = techScore;
   document.getElementById('logic-score').textContent    = logicScore;
+  document.getElementById('keyword-score').textContent  = keywordScore;
   document.getElementById('attitude-score').textContent = attitudeScore;
 
   // 바 차트 (최대 높이 160px)
@@ -90,15 +90,20 @@ function renderFeedback(data) {
   function setBar(id, valId, score, max, suffix) {
     const ratio = Math.min(score / max, 1);
     document.getElementById(id).style.height    = (ratio * BAR_MAX) + 'px';
-    document.getElementById(valId).textContent  = Number(score || 0).toFixed(1) + suffix;
+    document.getElementById(valId).textContent  = Math.round(score || 0) + suffix;
   }
-  // 0~10 스케일
-  setBar('bar-tech',    'bar-val-tech',    data.technical_score, 10,  '');
-  setBar('bar-logic',   'bar-val-logic',   data.logic_score,     10,  '');
-  setBar('bar-keyword', 'bar-val-keyword', data.keyword_score,   10,  '');
+  // 0~10 점수를 %로 변환해서 표시 (막대 높이 통일 + 실제 점수 병기)
+  function setScoreBar(id, valId, score10) {
+    const ratio = Math.min(score10 / 10, 1);
+    document.getElementById(id).style.height   = (ratio * BAR_MAX) + 'px';
+    document.getElementById(valId).textContent = `${Math.round(score10 * 10)}% (${Number(score10).toFixed(1)})`;
+  }
+  setScoreBar('bar-tech',    'bar-val-tech',    data.technical_score);
+  setScoreBar('bar-logic',   'bar-val-logic',   data.logic_score);
+  setScoreBar('bar-keyword', 'bar-val-keyword', data.keyword_score);
   // 0~100 스케일
-  setBar('bar-eyes',    'bar-val-eyes',    data.posture_summary.eyes_score,    100, '%');
-  setBar('bar-posture', 'bar-val-posture', data.posture_summary.posture_score, 100, '%');
+  setBar('bar-eyes',    'bar-val-eyes',    Math.round(data.posture_summary.eyes_score),    100, '%');
+  setBar('bar-posture', 'bar-val-posture', Math.round(data.posture_summary.posture_score), 100, '%');
 
   // 종합 코멘트
   document.getElementById('interview-comment').textContent = data.interview_comment || '-';

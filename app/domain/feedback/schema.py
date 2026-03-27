@@ -34,11 +34,12 @@ class HistoryResponse(BaseModel):
 
 
 class UserStatsResponse(BaseModel):
-    """유선님 마이페이지 통계 응답"""
+    """마이페이지 통계 응답"""
 
     total_count: int    # 총 면접 횟수
     avg_score: float    # 전체 interview_score 평균
     best_score: float   # 전체 interview_score 최고점
+    weekly_count: int   # 이번 주 면접 횟수
 
 
 class FeedbackRequest(BaseModel):
@@ -54,6 +55,7 @@ class FeedbackResponse(BaseModel):
     interview_id: str
     position: str
     tech_stack: list[str]
+    career_years: int
 
     # AI 피드백 점수 (models.AiFeedback 필드명과 통일)
     interview_score: float

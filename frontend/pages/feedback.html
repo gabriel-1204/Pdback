@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>피드백 결과 - P:dback</title>
-  <link rel="stylesheet" href="../css/common.css">
+  <link rel="stylesheet" href="/css/common.css">
 </head>
 <body>
 
@@ -43,6 +43,13 @@
 
       <!-- 점수 카드 -->
       <div class="score-cards">
+        <div class="score-card overall">
+          <div class="score-label">AI 종합</div>
+          <div class="score-value">
+            <span id="overall-score">-</span><span class="score-max"> / 10</span>
+          </div>
+          <div style="font-size:11px;color:#aaa;margin-top:6px;">(기술 · 논리 · 키워드 평균)</div>
+        </div>
         <div class="score-card tech">
           <div class="score-label">기술 정확도</div>
           <div class="score-value">
@@ -55,11 +62,18 @@
             <span id="logic-score">-</span><span class="score-max"> / 10</span>
           </div>
         </div>
+        <div class="score-card keyword">
+          <div class="score-label">키워드</div>
+          <div class="score-value">
+            <span id="keyword-score">-</span><span class="score-max"> / 10</span>
+          </div>
+        </div>
         <div class="score-card attitude">
           <div class="score-label">태도 점수</div>
           <div class="score-value">
             <span id="attitude-score">-</span><span class="score-max"> / 10</span>
           </div>
+          <div style="font-size:11px;color:#aaa;margin-top:6px;">(시선 · 자세 가중치 평균)</div>
         </div>
       </div>
 
@@ -141,7 +155,7 @@
   </div>
 </div>
 
-<script src="../js/feedback.js"></script>
+<script src="/js/feedback.js"></script>
 <script src="/js/auth-nav.js"></script>
 </body>
 </html>

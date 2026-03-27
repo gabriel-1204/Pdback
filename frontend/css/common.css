@@ -121,13 +121,15 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 /* Feedback page */
 .feedback-header { text-align: center; margin-bottom: 32px; }
 .feedback-header h2 { font-size: 22px; margin-bottom: 8px; }
-.score-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+.score-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 32px; }
 .score-card { background: #f8f9fa; border-radius: 12px; padding: 24px; text-align: center; border: 1px solid #eee; }
 .score-card .score-label { font-size: 13px; color: #888; margin-bottom: 8px; }
 .score-card .score-value { font-size: 36px; font-weight: 800; }
 .score-card .score-max { font-size: 14px; color: #999; }
+.score-card.overall .score-value { color: #6c9fff; }
 .score-card.tech .score-value { color: #4A6CF7; }
 .score-card.logic .score-value { color: #2ed573; }
+.score-card.keyword .score-value { color: #ffa502; }
 .score-card.attitude .score-value { color: #ff6348; }
 .feedback-section { margin-bottom: 24px; }
 .feedback-section h3 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -135,9 +137,6 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 .feedback-list li { padding: 10px 16px; background: #f8f9fa; border-radius: 8px; margin-bottom: 8px; font-size: 14px; line-height: 1.5; border-left: 3px solid; }
 .feedback-list li.strength { border-left-color: #2ed573; }
 .feedback-list li.improve { border-left-color: #ff6348; }
-.model-answer { background: #f0f7ff; border: 1px solid #d0e3ff; border-radius: 12px; padding: 20px; }
-.model-answer h4 { font-size: 14px; color: #4A6CF7; margin-bottom: 8px; }
-.model-answer p { font-size: 14px; line-height: 1.7; color: #555; }
 .bar-chart { display: flex; align-items: flex-end; gap: 16px; height: 160px; padding: 0 40px; }
 .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .bar { width: 100%; border-radius: 8px 8px 0 0; }

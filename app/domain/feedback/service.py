@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 
@@ -13,6 +14,7 @@ from app.domain.interview.models import InterviewDocument
 from app.domain.feedback.prompt import get_feedback_prompt
 from app.services.gemini import get_client
 from app.database import get_database
+from app.config import KST
 
 GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 
@@ -97,23 +99,28 @@ async def get_history(user_id: str, page: int = 1, size: int = 10) -> HistoryRes
 
 
 async def get_user_stats(user_id: str) -> UserStatsResponse:
-    """유선님 마이페이지 통계 조회 (총 면접횟수, 평균점수, 최고점수)"""
+    """마이페이지 통계 조회 (총 면접횟수, 평균점수, 최고점수, 이번주 면접횟수)"""
     db = get_database()
 
     docs = await db["feedbacks"].find(
         {"user_id": user_id},
-        {"ai_feedback.interview_score": 1}  # 점수 필드만 가져오기
+        {"ai_feedback.interview_score": 1, "created_at": 1}
     ).to_list(length=None)
 
     total_count = len(docs)
     if total_count == 0:
-        return UserStatsResponse(total_count=0, avg_score=0.0, best_score=0.0)
+        return UserStatsResponse(total_count=0, avg_score=0.0, best_score=0.0, weekly_count=0)
 
     scores = [doc["ai_feedback"]["interview_score"] for doc in docs]
     avg_score  = round(sum(scores) / total_count, 1)
     best_score = round(max(scores), 1)
 
-    return UserStatsResponse(total_count=total_count, avg_score=avg_score, best_score=best_score)
+    # 이번 주 월요일 00:00 (KST)
+    now = datetime.now(KST)
+    week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    weekly_count = sum(1 for doc in docs if doc.get("created_at") and doc["created_at"] >= week_start)
+
+    return UserStatsResponse(total_count=total_count, avg_score=avg_score, best_score=best_score, weekly_count=weekly_count)
 
 
 
@@ -262,6 +269,7 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
         interview_id=doc.interview_id,
         position=interview.position,
         tech_stack=interview.tech_stack,
+        career_years=interview.career_years,
         interview_score=doc.ai_feedback.interview_score,
         technical_score=doc.ai_feedback.technical_score,
         logic_score=doc.ai_feedback.logic_score,

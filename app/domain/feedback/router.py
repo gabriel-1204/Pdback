@@ -6,6 +6,7 @@ from app.domain.feedback.service import (
     create_feedback, get_feedback, get_history, get_user_stats)
 from app.domain.user.dependency import get_current_user
 
+# router.py: 어떤 url로 요청이 오면 어떤 함수를 실행할지 연결해줌
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
 
 # /feedback/generate
@@ -27,11 +28,11 @@ async def api_get_history(
     return await get_history(current_user, page, size)
 
 
-# 유선님 마이페이지에서 가져다쓰실 라우터
+# 마이페이지 통계 관련 데이터
 # /feedback/stats
 @router.get("/stats", response_model=UserStatsResponse)
 async def api_get_user_stats(current_user: str = Depends(get_current_user)):
-    """마이페이지 통계 (총 면접횟수, 평균점수, 최고점수)"""
+    """마이페이지 통계 (총 면접횟수, 평균점수, 최고점수, 이번주 면접횟수)"""
     return await get_user_stats(current_user)
 
 
