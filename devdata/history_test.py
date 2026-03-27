@@ -110,6 +110,59 @@ async def insert():
         await db['interviews'].delete_one({'_id': sid})
         await db['feedbacks'].delete_one({'interview_id': sid})
 
+        questions = [
+            {
+                'question_number': 1,
+                'question_content': f'{s["position"]} 직무에서 주로 사용하는 기술 스택을 설명해주세요.',
+                'model_answer': f'{", ".join(s["tech_stack"])}의 특징과 장점을 설명하는 모범 답안입니다.',
+                'question_keywords': s["tech_stack"],
+                'category': '기술',
+                'expected_duration_seconds': 120,
+                'created_at': created_at,
+                'answer': {'answer_content': '테스트 답변입니다.', 'stt_raw_text': None, 'started_at': created_at, 'ended_at': created_at, 'duration_seconds': 60, 'status': 'submitted'}
+            },
+            {
+                'question_number': 2,
+                'question_content': f'{s["tech_stack"][0]}에서 RESTful API를 설계할 때 고려해야 할 사항을 설명해주세요.',
+                'model_answer': 'RESTful API 설계 원칙(무상태성, 자원 중심 URI, HTTP 메서드 활용 등)을 설명하는 모범 답안입니다.',
+                'question_keywords': ['REST', 'API', 'HTTP'],
+                'category': '기술',
+                'expected_duration_seconds': 120,
+                'created_at': created_at,
+                'answer': {'answer_content': '테스트 답변입니다.', 'stt_raw_text': None, 'started_at': created_at, 'ended_at': created_at, 'duration_seconds': 65, 'status': 'submitted'}
+            },
+            {
+                'question_number': 3,
+                'question_content': '데이터베이스 인덱스의 동작 원리와 사용 시 주의사항을 설명해주세요.',
+                'model_answer': '인덱스 구조(B-Tree 등), 조회 성능 향상 원리, 과도한 인덱스로 인한 쓰기 성능 저하 등을 설명하는 모범 답안입니다.',
+                'question_keywords': ['데이터베이스', '인덱스', '성능'],
+                'category': '기술',
+                'expected_duration_seconds': 120,
+                'created_at': created_at,
+                'answer': {'answer_content': '테스트 답변입니다.', 'stt_raw_text': None, 'started_at': created_at, 'ended_at': created_at, 'duration_seconds': 70, 'status': 'submitted'}
+            },
+            {
+                'question_number': 4,
+                'question_content': f'{s["position"]} 개발 시 성능 최적화 경험을 말씀해주세요.',
+                'model_answer': '성능 병목 원인 분석 및 최적화 방법을 설명하는 모범 답안입니다.',
+                'question_keywords': ['성능', '최적화', '트러블슈팅'],
+                'category': '기술',
+                'expected_duration_seconds': 150,
+                'created_at': created_at,
+                'answer': {'answer_content': '테스트 답변입니다.', 'stt_raw_text': None, 'started_at': created_at, 'ended_at': created_at, 'duration_seconds': 80, 'status': 'submitted'}
+            },
+            {
+                'question_number': 5,
+                'question_content': f'{s["tech_stack"][0]} 환경에서 발생한 버그를 디버깅한 경험을 설명해주세요.',
+                'model_answer': '문제 재현 → 원인 분석 → 수정 → 검증 순서로 디버깅 과정을 설명하는 모범 답안입니다.',
+                'question_keywords': ['디버깅', '트러블슈팅', s["tech_stack"][0]],
+                'category': '기술',
+                'expected_duration_seconds': 120,
+                'created_at': created_at,
+                'answer': {'answer_content': '테스트 답변입니다.', 'stt_raw_text': None, 'started_at': created_at, 'ended_at': created_at, 'duration_seconds': 65, 'status': 'submitted'}
+            },
+        ]
+
         await db['interviews'].insert_one({
             '_id': sid,
             'user_id': USER_ID,
@@ -118,25 +171,7 @@ async def insert():
             'career_years': s["career_years"],
             'eye_contact': s["eye_contact"],
             'posture_safety_rate': s["posture_safety_rate"],
-            'questions': [
-                {
-                    'question_number': 1,
-                    'question_content': f'{s["position"]} 관련 기술 질문입니다.',
-                    'model_answer': '모범 답안입니다.',
-                    'question_keywords': s["tech_stack"],
-                    'category': '기술',
-                    'expected_duration_seconds': 120,
-                    'created_at': created_at,
-                    'answer': {
-                        'answer_content': '테스트 답변입니다.',
-                        'stt_raw_text': None,
-                        'started_at': created_at,
-                        'ended_at': created_at,
-                        'duration_seconds': 60,
-                        'status': 'submitted'
-                    }
-                }
-            ],
+            'questions': questions,
             'status': 'finished',
             'created_at': created_at,
         })
@@ -153,11 +188,11 @@ async def insert():
                 'strengths': ['답변이 명확했습니다.', '핵심 키워드를 잘 활용했습니다.'],
                 'improvements': ['더 구체적인 사례를 들면 좋겠습니다.'],
                 'question_feedbacks': [
-                    {
-                        'question_number': 1,
-                        'score': s["technical_score"],
-                        'comment': '기술적 이해도가 좋습니다.',
-                    }
+                    {'question_number': 1, 'score': s["technical_score"], 'comment': '기술 스택에 대한 이해도가 좋습니다.'},
+                    {'question_number': 2, 'score': s["logic_score"],     'comment': 'API 설계 원칙을 잘 이해하고 있습니다.'},
+                    {'question_number': 3, 'score': s["logic_score"],     'comment': '데이터베이스 인덱스 개념을 정확히 설명했습니다.'},
+                    {'question_number': 4, 'score': s["technical_score"], 'comment': '성능 최적화 경험을 구체적으로 서술했습니다.'},
+                    {'question_number': 5, 'score': s["keyword_score"],   'comment': '디버깅 접근 방식이 체계적입니다.'},
                 ],
             },
             'posture_summary': {

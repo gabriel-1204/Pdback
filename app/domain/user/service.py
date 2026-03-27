@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from bson import ObjectId
 from fastapi import HTTPException
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from app.domain.feedback.schema import UserStatsResponse
 
 from app.config import KST
 from app.core.security import (
@@ -183,48 +182,3 @@ async def refresh(refresh_token: str) -> dict:
         {"$set": {"last_login": datetime.now(KST),"refresh_token": new_refresh_token}})
 
     return {"access_token": new_access_token, "refresh_token": new_refresh_token}
-
-# 마이페이지 통계 - 이번주 인터뷰 면접횟수
-async def get_my_stats(user_id: str) -> dict:
-    """마이페이지 통계 (이번주 면접횟수 반환(월요일 00:00 KST 기준))"""
-    db = get_database()
-
-    # 월~일 기준으로 일주일 잡았어요
-    # 월0 화1 ~ 일6 숫자로 나오고 오늘 - 요일숫자 하면 이번주 월요일 날짜가 나와요.
-    today = datetime.now(KST)
-    monday = today - timedelta(days=today.weekday())
-    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-
-    # 이번주 면접횟수
-    weekly_count = await db["interviews"].count_documents({
-        "user_id": user_id,
-        "created_at": {"$gte": week_start} #인터뷰컬렉션의 created_at
-    })
-
-    return {"weekly_interviews": weekly_count}
-
-# 마이페이지 통계 - 총 면접횟수, 최고점수, 평균점수
-# 지영님이 만들어주신 API 가져다 사용
-async def get_user_stats(user_id: str) -> dict:
-    """마이페이지 통계 (총 면접횟수, 평균점수, 최고점수)"""
-    db = get_database()
-
-    # 총 면접횟수
-    total_count = await db["interviews"].count_documents({"user_id": user_id})
-
-    # 평균 점수
-    avg_score_result = await db["feedbacks"].aggregate([
-        {"$match": {"user_id": user_id}},
-        {"$group": {"_id": None, "avg_score": {"$avg": "$ai_feedback.interview_score"}}}
-    ]).to_list(length=1)
-
-    avg_score = round(avg_score_result[0]["avg_score"], 1) if avg_score_result else 0
-
-    # 최고 점수
-    best_score_result = await db["feedbacks"].find_one(
-        {"user_id": user_id},
-        sort=[("ai_feedback.interview_score", -1)])
-
-    best_score = best_score_result["ai_feedback"]["interview_score"] if best_score_result else 0
-
-    return UserStatsResponse(total_count=total_count, avg_score=avg_score, best_score=best_score)

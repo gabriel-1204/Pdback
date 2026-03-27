@@ -56,15 +56,3 @@ async def refresh(data: TokenRefresh):
     """리프레시 토큰을 사용하여 새 엑세스 토큰 발급"""
     token = await service.refresh(data.refresh_token)
     return token
-
-# 마이페이지 - 통계 (이번주 면접횟수)
-@router.get("/stats/weekly", response_model=dict)
-async def get_my_stats(current_user: str = Depends(get_current_user)):
-    """마이페이지 통계(이번주 면접횟수)"""
-    return await service.get_my_stats(current_user)
-
-# 마이페이지 - 통계 (총 면접횟수, 최고점수, 평균점수)
-@router.get("/stats/total", response_model=dict)
-async def get_user_stats(current_user: str = Depends(get_current_user)):
-    """마이페이지 통계(총 면접횟수, 최고점수, 평균점수)"""
-    return await service.get_user_stats(current_user)
