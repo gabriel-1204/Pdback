@@ -114,20 +114,28 @@ function renderPagination(total, page, size) {
   container.innerHTML = html;
 }
 
-// ── 페이지 이동 ───────────────────────────────────────────────────────
+// ── 페이지 상태 ───────────────────────────────────────────────────────
 
 const PAGE_SIZE = 10;
+let currentPage = 1;  // 지금 보고 있는 페이지 번호
+let totalPages = 0;   // 전체 페이지 수
 
-async function goPage(page) {
+// ── 페이지 이동 ───────────────────────────────────────────────────────
+
+window.goPage = async function(page) {
+  // 유효하지 않은 페이지 번호면 API 호출 차단
+  if (page < 1 || (totalPages > 0 && page > totalPages)) return;
   await load(page);
-}
+};
 
 async function load(page) {
   try {
     const data = await fetchHistory(page, PAGE_SIZE);
     if (!data) return;
+    currentPage = page;  // API한테 현재 페이지 묻는 대신, 이 함수에서 직접 기억하기
+    totalPages = Math.ceil((data.total || 0) / PAGE_SIZE);  // 전체 페이지 수 계산해서 저장
     renderTable(data.items);
-    renderPagination(data.total, data.page, PAGE_SIZE);
+    renderPagination(data.total, currentPage, PAGE_SIZE);
   } catch (e) {
     document.getElementById('history-body').innerHTML = `
       <tr>

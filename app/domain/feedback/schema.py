@@ -34,7 +34,7 @@ class HistoryResponse(BaseModel):
 
 
 class UserStatsResponse(BaseModel):
-    """유선님 마이페이지 통계 응답"""
+    """마이페이지 통계 응답"""
 
     total_count: int    # 총 면접 횟수
     avg_score: float    # 전체 interview_score 평균

@@ -97,7 +97,7 @@ async def get_history(user_id: str, page: int = 1, size: int = 10) -> HistoryRes
 
 
 async def get_user_stats(user_id: str) -> UserStatsResponse:
-    """유선님 마이페이지 통계 조회 (총 면접횟수, 평균점수, 최고점수)"""
+    """마이페이지 통계 조회 (총 면접횟수, 평균점수, 최고점수)"""
     db = get_database()
 
     docs = await db["feedbacks"].find(
