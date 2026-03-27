@@ -1,10 +1,19 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta
+
 from bson import ObjectId
 from fastapi import HTTPException
-from app.core.security import create_access_token, hash_password, verify_password, create_refresh_token, decode_token
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+
+from app.config import KST
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 from app.database import get_database
 from app.domain.user.schemas import UserResponse
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 
 
 # 회원가입
@@ -18,7 +27,7 @@ async def register(username:str, email:str, password:str, position:str|None = No
         raise HTTPException(status_code=400, detail="이미 존재하는 이메일입니다.")
 
     password_hash = hash_password(password)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(KST)
     result = await db["users"].insert_one({
         "username" : username,
         "email" : email,
@@ -30,7 +39,7 @@ async def register(username:str, email:str, password:str, position:str|None = No
         "last_login" : None,
         "position" : position,
         "refresh_token" : None,})
-    
+
     user_id = str(result.inserted_id)
     access_token = create_access_token({"sub": user_id})
     refresh_token = create_refresh_token({"sub": user_id})
@@ -60,11 +69,11 @@ async def login(email:str, password:str) -> dict: #토큰 두개 반환되어 st
     user_id = str(user["_id"])
     access_token = create_access_token({"sub": user_id})
     refresh_token = create_refresh_token({"sub": user_id})
-    
+
     # DB에 last_login, refresh_token 저장
     await db["users"].update_one(
         {"_id" : ObjectId(user_id)},
-        {"$set" : {"last_login" : datetime.now(timezone.utc),"refresh_token": refresh_token }})
+        {"$set" : {"last_login" : datetime.now(KST),"refresh_token": refresh_token }})
 
     return {"access_token": access_token, "refresh_token": refresh_token}
 
@@ -106,10 +115,10 @@ async def update_me(
         raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다.")
 
     # 기본필드
-    fields = {"updated_at" : datetime.now(timezone.utc)}
+    fields = {"updated_at" : datetime.now(KST)}
     if username is not None:
         fields["username"] = username
-    
+
     # 희망직무 수정
     if position is not None:
         fields["position"] = position
@@ -120,7 +129,7 @@ async def update_me(
             raise HTTPException(status_code=400, detail="현재 비밀번호를 입력해주세요.")
         if not verify_password(current_password, user["password_hash"]):
             raise HTTPException(status_code=400, detail="현재 비밀번호가 일치하지 않습니다.")
-        
+
         fields["password_hash"] = hash_password(new_password)
 
     await db["users"].update_one({"_id":ObjectId(user_id)}, {"$set":fields})
@@ -171,6 +180,24 @@ async def refresh(refresh_token: str) -> dict:
 
     await db["users"].update_one(
         {"_id": ObjectId(user_id)},
-        {"$set": {"last_login": datetime.now(timezone.utc),"refresh_token": new_refresh_token}})
+        {"$set": {"last_login": datetime.now(KST),"refresh_token": new_refresh_token}})
 
     return {"access_token": new_access_token, "refresh_token": new_refresh_token}
+
+# 인터뷰
+async def get_my_stats(user_id: str) -> dict:
+    db = get_database()
+
+    # 월~일 기준으로 일주일 잡았어요
+    # 월0 화1 ~ 일6 숫자로 나오고 오늘 - 요일숫자 하면 이번주 월요일 날짜가 나와요.
+    today = datetime.now(KST)
+    monday = today - timedelta(days=today.weekday())
+    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 이번주 면접횟수
+    weekly_count = await db["interviews"].count_documents({
+        "user_id": user_id,
+        "created_at": {"$gte": week_start} #인터뷰컬렉션의 created_at
+    })
+
+    return {"weekly_interviews": weekly_count}

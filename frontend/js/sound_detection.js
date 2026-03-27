@@ -9,12 +9,19 @@ const chatMessages = document.querySelector(".chat-messages");
 const sessionIdInput = document.getElementById("session-id");
 const finalSpan = document.getElementById("final-span");
 const interimSpan = document.getElementById("interim-span");
-const submitBtn = document.getElementById("submit-btn");
+const toggleBtn = document.getElementById("toggle-btn");
+const sttDot = document.getElementById("stt-dot");
+const sttLabel = document.getElementById("stt-label");
 
 // 음성 인식 상태
 let finalTranscript = "";
-let isStopped = false;
+let isRecording = false;
+let isFinished = false;
+let isSubmitting = false;
 let recognition = null;
+let questionNumber = 0;
+const MAX_QUESTIONS = 5;
+const questionCounter = document.querySelector(".chat-header span");
 
 // AI 말풍선을 채팅창에 추가
 function addAIBubble(text) {
@@ -41,74 +48,157 @@ function clearTranscript() {
     if (interimSpan) interimSpan.textContent = "";
 }
 
-// 면접 시작 → 첫 질문 받아오기
-async function startInterview() {
-    // localStorage에서 값 읽기
-    const jobRole = localStorage.getItem("job_role") ?? "백엔드";
-    const techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
-    const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
+// 질문 카운트 업데이트
+function updateQuestionCount() {
+    questionNumber++;
+    if (questionCounter) questionCounter.textContent = `질문 ${questionNumber}/${MAX_QUESTIONS}`;
+}
 
-try {
-    const res = await fetch("/api/v1/interview/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json",
-             "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({
-            job_role: jobRole,
-            tech_stack: techStack,
-            experience_years: experienceYears})
-        });
-    if (!res.ok) {
-        addAIBubble("면접을 시작할 수 없습니다. 페이지를 새로고침 해주세요.");
-        return;
-    } 
-    const data = await res.json();
-    sessionIdInput.value = data.session_id;
-    addAIBubble(data.intro_message);
-    addAIBubble(data.question);
-    
-    } catch (e) {
-    addAIBubble("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
+// 마이크 상태 UI 업데이트
+function updateMicUI(recording) {
+    if (sttDot) {
+        sttDot.className = recording ? "status-dot red" : "status-dot";
+    }
+    if (sttLabel) {
+        sttLabel.textContent = recording ? "녹음 중" : "마이크 OFF";
+    }
+    if (toggleBtn) {
+        toggleBtn.textContent = recording ? "답변 완료" : "답변 시작";
+        toggleBtn.className = recording ? "btn-danger" : "btn-primary";
     }
 }
 
-// 완료 버튼 → 답변 제출 후 꼬리질문 받기
-if (submitBtn) {
-    submitBtn.addEventListener("click", async () => {
-        if (!finalTranscript.trim()) return;
+// 답변 제출
+async function submitAnswer() {
+    if (!finalTranscript.trim() || isSubmitting) return;
+    isSubmitting = true;
 
-        try {
+    try {
         const answerText = finalTranscript;
         addUserBubble(answerText);
         clearTranscript();
 
+        if (toggleBtn) toggleBtn.disabled = true;
+
         const res = await fetch("/api/v1/interview/answer", {
             method: "POST",
-            headers: { "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('access_token')}`},
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
+            },
             body: JSON.stringify({
                 session_id: sessionIdInput.value,
                 answer_content: answerText,
             })
         });
+
         if (!res.ok) {
             addAIBubble("답변 제출에 실패했습니다. 다시 시도해주세요.");
+            if (toggleBtn) toggleBtn.disabled = false;
             return;
         }
+
         const data = await res.json();
 
         if (data.is_finished) {
             addAIBubble("면접이 종료되었습니다. 수고하셨습니다!");
-            isStopped = true;
-            if (recognition) {recognition.stop();}
+            isFinished = true;
+            if (toggleBtn) {
+                toggleBtn.disabled = true;
+                toggleBtn.textContent = "면접 종료";
+            }
         } else {
             addAIBubble(data.follow_up_question);
+            updateQuestionCount();
+            if (toggleBtn) toggleBtn.disabled = false;
         }
     } catch (e) {
-        addAIBubble("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.")
+        addAIBubble("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
+        if (toggleBtn) toggleBtn.disabled = false;
+    } finally {
+        isSubmitting = false;
+        clearTranscript();
     }
-    });
+}
+
+// 녹음 시작/중지 토글
+function toggleRecording() {
+    if (isFinished || isSubmitting) return;
+    if (!recognition) {
+        addAIBubble("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.");
+        return;
+    }
+
+    if (!isRecording) {
+        // OFF → ON: 녹음 시작
+        clearTranscript();
+        recognition.start();
+        isRecording = true;
+        updateMicUI(true);
+    } else {
+        // ON → OFF: 녹음 중지 + 답변 제출
+        // interim 텍스트가 final로 확정되기 전에 멈출 수 있으므로 합산
+        if (interimSpan && interimSpan.textContent.trim()) {
+            finalTranscript += interimSpan.textContent;
+            interimSpan.textContent = "";
+        }
+        recognition.stop();
+        isRecording = false;
+        updateMicUI(false);
+        submitAnswer();
+    }
+}
+
+// 토글 버튼 클릭 이벤트
+if (toggleBtn) {
+    toggleBtn.addEventListener("click", toggleRecording);
+}
+
+// 스페이스바 단축키
+document.addEventListener("keydown", function(e) {
+    if (e.code === "Space" && e.target === document.body) {
+        e.preventDefault();
+        toggleRecording();
+    }
+});
+
+// 면접 시작 → 첫 질문 받아오기
+async function startInterview() {
+    const jobRole = localStorage.getItem("job_role") ?? "백엔드";
+    const techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
+    const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
+
+    try {
+        const res = await fetch("/api/v1/interview/start", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
+            },
+            body: JSON.stringify({
+                job_role: jobRole,
+                tech_stack: techStack,
+                experience_years: experienceYears
+            })
+        });
+
+        if (!res.ok) {
+            addAIBubble("면접을 시작할 수 없습니다. 페이지를 새로고침 해주세요.");
+            return;
+        }
+
+        const data = await res.json();
+        if (sessionIdInput) sessionIdInput.value = data.session_id;
+        addAIBubble(data.intro_message);
+        addAIBubble(data.question);
+        updateQuestionCount();
+
+        // 첫 질문 받은 후 버튼 활성화
+        if (toggleBtn) toggleBtn.disabled = false;
+    } catch (e) {
+        console.error("startInterview 에러:", e);
+        addAIBubble("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
+    }
 }
 
 // 음성 인식 설정
@@ -123,6 +213,7 @@ if (!SpeechRecognition) {
     recognition.lang = "ko-KR";
 
     recognition.onresult = function(event) {
+        if (!isRecording) return;
         let interimTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -138,17 +229,18 @@ if (!SpeechRecognition) {
     };
 
     recognition.onerror = function(event) {
-        if (interimSpan){
-            interimSpan.textContent = "오류: " + event.error;
-            isStopped = true;}
+        // 복구 가능한 에러는 무시
+        if (["no-speech", "network", "aborted"].includes(event.error)) return;
+        // 치명적 에러 (마이크 권한 거부 등)
+        isRecording = false;
+        updateMicUI(false);
+        if (interimSpan) interimSpan.textContent = "마이크 오류: " + event.error;
     };
 
     recognition.onend = function() {
-        if (!isStopped){
-            recognition.start();}
+        // 녹음 중에 브라우저가 자동 종료한 경우 재시작
+        if (isRecording) recognition.start();
     };
-
-    recognition.start();
 }
 
 startInterview();

@@ -33,6 +33,14 @@ class HistoryResponse(BaseModel):
     size: int    # 페이지당 항목 수
 
 
+class UserStatsResponse(BaseModel):
+    """유선님 마이페이지 통계 응답"""
+
+    total_count: int    # 총 면접 횟수
+    avg_score: float    # 전체 interview_score 평균
+    best_score: float   # 전체 interview_score 최고점
+
+
 class FeedbackRequest(BaseModel):
     """종합 피드백 생성 요청"""
 
@@ -41,6 +49,11 @@ class FeedbackRequest(BaseModel):
 
 class FeedbackResponse(BaseModel):
     """종합 피드백 응답 — models.FeedbackDocument 기반"""
+
+    # 면접 메타데이터 (히스토리 목록에서 사용)
+    interview_id: str
+    position: str
+    tech_stack: list[str]
 
     # AI 피드백 점수 (models.AiFeedback 필드명과 통일)
     interview_score: float

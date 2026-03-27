@@ -6,22 +6,6 @@ function getToken() {
   return localStorage.getItem('access_token');
 }
 
-// 로그아웃 링크 연결
-window.logout = async function() {
-  const token = getToken();
-  try {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-  } catch (error) {
-    // 로그아웃 요청 실패해도 토큰 삭제 후 로그인페이지 이동(유선님따라 추가^^)
-  }
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  window.location.href = '/login';
-}
-
 function showError(msg) {
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('error-state').style.display  = 'block';
@@ -48,7 +32,7 @@ async function generateFeedback(sessionId, token) {
   });
 
   if (res.status === 401) {
-    window.location.href = 'login.html';
+    window.location.href = '/login';
     return null;
   }
   if (res.status === 409) {
@@ -67,7 +51,7 @@ async function getFeedback(interviewId, token) {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   if (res.status === 401) {
-    window.location.href = 'login.html';
+    window.location.href = '/login';
     return null;
   }
   if (!res.ok) {
@@ -214,7 +198,7 @@ function escapeHtml(str) {
 async function init() {
   const token = getToken();
   if (!token) {
-    window.location.href = 'login.html';
+    window.location.href = '/login';
     return;
   }
 

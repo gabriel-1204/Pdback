@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 from app.domain.feedback.schema import (
     FeedbackResponse, QuestionFeedbackResponse,
-    PostureSummaryResponse, HistoryResponse)
+    PostureSummaryResponse, HistoryResponse, UserStatsResponse)
 from app.domain.feedback.models import (
     AiFeedback, PostureSummary,
     FeedbackDocument, QuestionFeedback)
@@ -94,6 +94,26 @@ async def get_history(user_id: str, page: int = 1, size: int = 10) -> HistoryRes
         result.append(_to_response(feedback_doc, interview))
 
     return HistoryResponse(items=result, total=total, page=page, size=size)
+
+
+async def get_user_stats(user_id: str) -> UserStatsResponse:
+    """유선님 마이페이지 통계 조회 (총 면접횟수, 평균점수, 최고점수)"""
+    db = get_database()
+
+    docs = await db["feedbacks"].find(
+        {"user_id": user_id},
+        {"ai_feedback.interview_score": 1}  # 점수 필드만 가져오기
+    ).to_list(length=None)
+
+    total_count = len(docs)
+    if total_count == 0:
+        return UserStatsResponse(total_count=0, avg_score=0.0, best_score=0.0)
+
+    scores = [doc["ai_feedback"]["interview_score"] for doc in docs]
+    avg_score  = round(sum(scores) / total_count, 1)
+    best_score = round(max(scores), 1)
+
+    return UserStatsResponse(total_count=total_count, avg_score=avg_score, best_score=best_score)
 
 
 
@@ -239,6 +259,9 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
     )
 
     return FeedbackResponse(
+        interview_id=doc.interview_id,
+        position=interview.position,
+        tech_stack=interview.tech_stack,
         interview_score=doc.ai_feedback.interview_score,
         technical_score=doc.ai_feedback.technical_score,
         logic_score=doc.ai_feedback.logic_score,

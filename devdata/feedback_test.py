@@ -6,8 +6,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 # 가입 -> 로그인 -> 토큰 authorize에 넣기
 # powershell에서 python feedback_test.py
 
+# 내일의 나에게: 히스토리 테스트 위해 피드백 5개 넣는것도 데이터 만들어야한다!!!!!
 # jwt.io에서 확인한 user_id (sub 값) 여기에 입력
-USER_ID = "여기에_유저ID_입력"
+USER_ID = "여기다 id 넣어라"
 
 async def insert():
     """docs에서 feedback api 3개 테스트하려고 만든 데이터 삽입용"""

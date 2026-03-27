@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.config import KST
 
 
 class Answer(BaseModel):
@@ -54,5 +56,5 @@ class InterviewDocument(BaseModel):
     # 메타데이터
     status: str = "in_progress"
     total_duration_seconds: int | None = None
-    created_at: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(KST))
     finished_at: datetime | None = None

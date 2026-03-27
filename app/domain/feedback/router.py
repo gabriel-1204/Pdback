@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.domain.feedback.schema import (
-    FeedbackRequest, FeedbackResponse, HistoryResponse)
+    FeedbackRequest, FeedbackResponse, HistoryResponse, UserStatsResponse)
 from app.domain.feedback.service import (
-    create_feedback, get_feedback, get_history)
+    create_feedback, get_feedback, get_history, get_user_stats)
 from app.domain.user.dependency import get_current_user
 
 router = APIRouter(prefix="/feedback", tags=["Feedback"])
@@ -25,6 +25,14 @@ async def api_get_history(
     current_user: str = Depends(get_current_user)):
     """유저별 히스토리 페이지"""
     return await get_history(current_user, page, size)
+
+
+# 유선님 마이페이지에서 가져다쓰실 라우터
+# /feedback/stats
+@router.get("/stats", response_model=UserStatsResponse)
+async def api_get_user_stats(current_user: str = Depends(get_current_user)):
+    """마이페이지 통계 (총 면접횟수, 평균점수, 최고점수)"""
+    return await get_user_stats(current_user)
 
 
 # 본인 feedback만 열람가능 (타인것 X)

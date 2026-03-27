@@ -1,6 +1,9 @@
-from datetime import datetime, timezone
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from datetime import datetime
 from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.config import KST
 
 
 class UserDocument(BaseModel):
@@ -17,8 +20,8 @@ class UserDocument(BaseModel):
 
     # 로그 및 기록
     # lambda로 감싸야 객체 생성할 때마다 그 시간으로 실행(없으면 서버 시작시점 시간으로 고정)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(KST))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(KST))
     last_login: datetime | None = None
 
     # AI 면접관련

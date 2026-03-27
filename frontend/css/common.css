@@ -74,6 +74,8 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .status-dot.green { background: #2ed573; }
 .status-dot.blue { background: #4A6CF7; }
+.status-dot.red { background: #ff4757; animation: pulse 1s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .status-label { font-size: 11px; color: rgba(255,255,255,0.7); }
 .timer-badge { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; }
 .attitude-bar { position: absolute; bottom: 16px; left: 16px; right: 16px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px 16px; }
@@ -82,7 +84,9 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 .attitude-meter-fill { height: 100%; background: linear-gradient(90deg, #2ed573, #4A6CF7); border-radius: 3px; }
 .chat-panel { display: flex; flex-direction: column; background: #f8f9fa; border-radius: 12px; border: 1px solid #eee; }
 .chat-header { padding: 16px; border-bottom: 1px solid #eee; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-.chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; max-height: 50vh; }
+.chat-messages::-webkit-scrollbar { display: none; }
+.chat-messages { scrollbar-width: none; }
 .chat-bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; max-width: 90%; }
 .chat-bubble.ai { background: #fff; border: 1px solid #e0e0e0; align-self: flex-start; }
 .chat-bubble.user { background: #4A6CF7; color: #fff; align-self: flex-end; }
@@ -97,6 +101,22 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 .stt-wave span:nth-child(5) { height: 8px; animation-delay: 0.4s; }
 .interim-span {color:#999;}
 @keyframes wave { to { height: 4px; } }
+
+/* STT 하단 영역 */
+.stt-bottom-area { margin-top: 16px; background: #fff; border-radius: 12px; border: 1px solid #eee; padding: 16px 20px; }
+.stt-text-box { display: flex; align-items: flex-start; gap: 10px; min-height: 60px; padding: 12px 16px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd; font-size: 15px; line-height: 1.6; word-break: keep-all; }
+.stt-text-box #final-span { color: #333; }
+.stt-text-box #interim-span { color: #999; }
+.stt-controls { display: flex; align-items: center; gap: 12px; margin-top: 12px; justify-content: flex-end; }
+
+/* 답변 토글 버튼 */
+#toggle-btn { width: 120px; padding: 10px 0; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; color: #fff; transition: background 0.2s, box-shadow 0.2s; }
+#toggle-btn.btn-primary { background: #4A6CF7; }
+#toggle-btn.btn-primary:hover { background: #3a5ce5; }
+#toggle-btn.btn-danger { background: #ff4757; box-shadow: 0 0 12px rgba(255,71,87,0.5); animation: pulse-btn 1.2s infinite; }
+#toggle-btn.btn-danger:hover { background: #e8364a; }
+#toggle-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; animation: none; }
+@keyframes pulse-btn { 0%, 100% { box-shadow: 0 0 12px rgba(255,71,87,0.5); } 50% { box-shadow: 0 0 20px rgba(255,71,87,0.8); } }
 
 /* Feedback page */
 .feedback-header { text-align: center; margin-bottom: 32px; }
@@ -312,6 +332,13 @@ body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
 .score-badge.high { background: #e8f8f0; color: #2ed573; }
 .score-badge.mid { background: #fff8e8; color: #f0a030; }
 .score-badge.low { background: #ffe8e8; color: #ff4757; }
+
+.btn-detail { color: #4A6CF7; font-size: 13px; font-weight: 600; text-decoration: none; }
+.btn-detail:hover { text-decoration: underline; }
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+.pagination button { background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; padding: 6px 12px; font-size: 13px; cursor: pointer; transition: background 0.2s; }
+.pagination button:hover { background: #e0e0e0; }
+.pagination button.active { background: #4A6CF7; color: #fff; border-color: #4A6CF7; }
 
 /* Mypage */
 .profile-layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; }

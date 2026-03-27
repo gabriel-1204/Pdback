@@ -4,27 +4,25 @@ from datetime import datetime
 from fastapi import HTTPException
 from google.genai import types
 
+from app.config import KST
 from app.database import get_database
 from app.domain.interview.models import Answer, InterviewDocument, Question
 from app.domain.interview.prompt import (
-    INTERVIEW_INTRO_MESSAGE, 
-    get_first_question_prompt, 
+    INTERVIEW_INTRO_MESSAGE,
+    get_first_question_prompt,
     get_followup_prompt,
-    build_system_prompt
 )
-
 from app.domain.interview.schema import (
     AnswerRequest,
     AnswerResponse,
     InterviewStartRequest,
     InterviewStartResponse,
 )
-from app.services.gemini import create_chat_session, ask_question
+from app.services.gemini import ask_question, create_chat_session
 
-'''세션이 시작되면 첫 시작 문구가 뜨고, 첫 질문이 생성되어 뜬다. 
-그러면 내가 답변하고 답변한 시간이 기록된다. 그리고 다시 꼬리질문이 생성되어 뜬다.
-그러면 꼬리에 대한 답을 하고... 최대 질문수에 도달하면 음성인식이 멈추고 면접 한 세션이 종료된다.
-'''
+# 세션이 시작되면 첫 시작 문구가 뜨고, 첫 질문이 생성되어 뜬다.
+# 그러면 내가 답변하고 답변한 시간이 기록된다. 그리고 다시 꼬리질문이 생성되어 뜬다.
+# 그러면 꼬리에 대한 답을 하고... 최대 질문수에 도달하면 음성인식이 멈추고 면접 한 세션이 종료된다.
 MAX_QUESTIONS = 5
 # 면접 세션을 생성하고 첫 질문을 반환한다.
 async def start_interview(request: InterviewStartRequest, user_id: str) -> InterviewStartResponse:
@@ -36,16 +34,16 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
         job_role=request.job_role,
         tech_stack=request.tech_stack,
         experience_years=request.experience_years)
-    
+
     first_question = await ask_question(chat, get_first_question_prompt())
 
 
     # 3. 세션 id 발급, document 생성
     session_id = str(uuid.uuid4())
-    now = datetime.now()
+    now = datetime.now(KST)
 
     document = InterviewDocument(
-        user_id=user_id,   # router에서 받은 실제 user_id 사용      
+        user_id=user_id,   # router에서 받은 실제 user_id 사용
         position=request.job_role,
         tech_stack=request.tech_stack,
         career_years=request.experience_years,
@@ -76,18 +74,23 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
         question=first_question,
     )
 
-    
+
 
 #답변을 분석하고 꼬리 질문을 생성한다.
 async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
     """답변을 분석하고 꼬리 질문을 생성합니다."""
     db = get_database()
-    now = datetime.now()
+    now = datetime.now(KST)
 
     # 1. MongoDB에서 세션 조회
     doc = await db["interviews"].find_one({"_id": request.session_id})
+    if doc is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"세션을 찾을 수 없습니다: {request.session_id}",
+        )
     if doc["user_id"] != user_id:
-        raise HTTPException(status_code=404, detail=f"세션을 찾을 수 없습니다: {request.session_id}")
+        raise HTTPException(status_code=403, detail="본인의 면접 세션만 접근할 수 있습니다.")
 
 
     questions: list[dict] = doc.get("questions", [])
@@ -97,7 +100,13 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
 
     # 현재 질문의 created_at = 사용자가 질문을 받은 시점 = 답변 시작 시점
     question_created_at = questions[current_question_number - 1]["created_at"]
-    started_at = question_created_at if isinstance(question_created_at, datetime) else datetime.fromisoformat(str(question_created_at))
+    if isinstance(question_created_at, datetime):
+        started_at = question_created_at
+    else:
+        started_at = datetime.fromisoformat(str(question_created_at))
+    # MongoDB에서 읽어온 naive datetime에 KST 부여
+    if started_at.tzinfo is None:
+        started_at = started_at.replace(tzinfo=KST)
     ended_at = now
     duration_seconds = int((ended_at - started_at).total_seconds())
 
@@ -147,7 +156,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         tech_stack=doc["tech_stack"],
         experience_years=doc["career_years"],
         history=history)
-    
+
     current_question = questions[current_question_number - 1]["question_content"]
 
     follow_up_question = await ask_question(
@@ -155,7 +164,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         get_followup_prompt(current_question, request.answer_content)
     )
 
-    
+
     # 5. 꼬리질문을 새 Question으로 MongoDB에 저장
     new_question = Question(
         question_number=current_question_number + 1,
