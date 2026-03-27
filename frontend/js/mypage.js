@@ -51,7 +51,6 @@
           document.getElementById('input-email').value = user.email; //이메일 수정불가능 , 그냥 현재 이메일(아이디) 보여주기
           originalPosition = user.position || ''; //희망 직무 선택
           document.getElementById('input-position').value = originalPosition;
-          console.log('originalPosition:', originalPosition);
         } catch (error) {
           alert('사용자 정보를 불러오는 데 실패했습니다.');
         }
