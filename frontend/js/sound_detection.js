@@ -10,6 +10,7 @@ const sessionIdInput = document.getElementById("session-id");
 const finalSpan = document.getElementById("final-span");
 const interimSpan = document.getElementById("interim-span");
 const toggleBtn = document.getElementById("toggle-btn");
+const nextSessionBtn = document.getElementById("next-session-btn");
 const sttDot = document.getElementById("stt-dot");
 const sttLabel = document.getElementById("stt-label");
 
@@ -20,7 +21,10 @@ let isFinished = false;
 let isSubmitting = false;
 let recognition = null;
 let questionNumber = 0;
+let followUpCount = 0;
+let currentSession = parseInt(localStorage.getItem("current_session") ?? "1");
 const MAX_QUESTIONS = 5;
+const MAX_SESSIONS = 2;
 const questionCounter = document.querySelector(".chat-header span");
 
 // AI 말풍선을 채팅창에 추가
@@ -100,15 +104,23 @@ async function submitAnswer() {
 
         const data = await res.json();
 
-        if (data.is_finished) {
-            addAIBubble("면접이 종료되었습니다. 수고하셨습니다!");
-            isFinished = true;
-            if (toggleBtn) {
-                toggleBtn.disabled = true;
-                toggleBtn.textContent = "면접 종료";
-            }
-        } else {
+if (data.is_finished) {
+    isFinished = true;
+    if (toggleBtn) toggleBtn.disabled = true;
+    if (currentSession < MAX_SESSIONS) {
+        addAIBubble(`${currentSession}/${MAX_SESSIONS} 세션 완료! 수고하셨습니다.`);
+        if (nextSessionBtn) nextSessionBtn.disabled = followUpCount < 5;
+    } else {
+        addAIBubble(`모든 ${MAX_SESSIONS}개 세션이 종료되었습니다. 수고하셨습니다!`);
+        localStorage.removeItem("current_session");
+        if (nextSessionBtn) {
+            nextSessionBtn.textContent = "히스토리로 이동";
+            nextSessionBtn.disabled = false;
+        }
+    }
+} else {
             addAIBubble(data.follow_up_question);
+            followUpCount++;
             updateQuestionCount();
             if (toggleBtn) toggleBtn.disabled = false;
         }
@@ -124,6 +136,7 @@ async function submitAnswer() {
 // 녹음 시작/중지 토글
 function toggleRecording() {
     if (isFinished || isSubmitting) return;
+    
     if (!recognition) {
         addAIBubble("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 사용해주세요.");
         return;
@@ -135,6 +148,7 @@ function toggleRecording() {
         recognition.start();
         isRecording = true;
         updateMicUI(true);
+        
     } else {
         // ON → OFF: 녹음 중지 + 답변 제출
         // interim 텍스트가 final로 확정되기 전에 멈출 수 있으므로 합산
@@ -153,6 +167,19 @@ function toggleRecording() {
 if (toggleBtn) {
     toggleBtn.addEventListener("click", toggleRecording);
 }
+
+// 버튼 이벤트 등록부
+if (nextSessionBtn) {
+    nextSessionBtn.addEventListener("click", function () {
+        if (currentSession < MAX_SESSIONS) {
+            localStorage.setItem("current_session", currentSession + 1);
+            window.location.href = '/interview';
+        } else {
+            window.location.href = '/history';
+        }
+    });
+}
+
 
 // 스페이스바 단축키
 document.addEventListener("keydown", function(e) {
