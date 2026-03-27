@@ -165,7 +165,7 @@ startBtn.addEventListener('click', () => {
   }
   const sessionText = sessionCountGroup.querySelector('.radio-mock.selected')?.textContent.trim();
   const sessionMap = { '1회': 1, '2회': 2, '3회': 3 };
-  const maxSessions = sessionMap[sessionText] ?? 2;
+  const maxSessions = sessionMap[sessionText] ?? 1;
 
   try {
     localStorage.setItem("job_role", jobRole);
