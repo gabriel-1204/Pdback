@@ -84,17 +84,15 @@ async function submitAnswer() {
 
         if (toggleBtn) toggleBtn.disabled = true;
 
-        const res = await fetch("/api/v1/interview/answer", {
+        const res = await authFetch("/api/v1/interview/answer", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 session_id: sessionIdInput.value,
                 answer_content: answerText,
             })
         });
+        if (!res) return;
 
         if (!res.ok) {
             addAIBubble("답변 제출에 실패했습니다. 다시 시도해주세요.");
@@ -175,12 +173,9 @@ if (nextSessionBtn) {
         nextSessionBtn.textContent = "피드백 저장 중...";
 
         try {
-            await fetch("/api/v1/feedback/generate", {
+            await authFetch("/api/v1/feedback/generate", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: sessionIdInput.value })
             });
         } catch (e) {
@@ -212,18 +207,16 @@ async function startInterview() {
     const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
 
     try {
-        const res = await fetch("/api/v1/interview/start", {
+        const res = await authFetch("/api/v1/interview/start", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 job_role: jobRole,
                 tech_stack: techStack,
                 experience_years: experienceYears
             })
         });
+        if (!res) return;
 
         if (!res.ok) {
             addAIBubble("면접을 시작할 수 없습니다. 페이지를 새로고침 해주세요.");

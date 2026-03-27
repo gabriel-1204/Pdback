@@ -6,38 +6,14 @@ if (!localStorage.getItem('access_token')) {
 
 const API_BASE = '/api/v1';
 
-// ── 유틸 ─────────────────────────────────────────────────────────────
-
-function getToken() {
-  return localStorage.getItem('access_token');
-}
-
-function scoreClass(score, max) {
-  const ratio = score / max;
-  if (ratio >= 0.7) return 'high';
-  if (ratio >= 0.4) return 'mid';
-  return 'low';
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+// ── 유틸 (getToken, scoreClass, escapeHtml → utils.js) ──────────────
 
 // ── API 호출 ──────────────────────────────────────────────────────────
 
 async function fetchHistory(page, size) {
-  const token = getToken();
-  const res = await fetch(`${API_BASE}/feedback/history?page=${page}&size=${size}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  if (res.status === 401) {
-    window.location.href = '/login';
-    return null;
-  }
+  const res = await authFetch(`${API_BASE}/feedback/history?page=${page}&size=${size}`);
+  if (!res) return null;
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || '히스토리 조회에 실패했습니다.');
@@ -207,10 +183,5 @@ async function load(page) {
 // ── 진입점 ────────────────────────────────────────────────────────────
 
 (async function init() {
-  const token = getToken();
-  if (!token) {
-    window.location.href = '/login';
-    return;
-  }
   await load(1);
 })();

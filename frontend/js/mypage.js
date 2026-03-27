@@ -1,47 +1,12 @@
 (function() {
-      //저장된 access_token 가져오기(만료 시 갱신 후 재할당)
-      let token = localStorage.getItem('access_token');
       let originalPosition = '';
 
-      //토큰이 없음=로그인 하지않음 , 로그인페이지로 이동
-      if (!token) { alert('로그인이 필요합니다.'); window.location.href = '/login'; return; }
+      if (!localStorage.getItem('access_token')) { alert('로그인이 필요합니다.'); window.location.href = '/login'; return; }
 
-      //사용자 정보 로드(내 정보 가져와서 보여주기 작업)
-      //토큰이 있으면 로그인한 사람 - 없으면 로그인 안한사람
-      //상대경로사용하여 배포시 자동으로 경로 맞춰지도록 설정
       async function loadUserInfo() {
         try {
-          const response = await fetch('/api/v1/auth/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-
-          // access_token 만료 시(401) refresh_token으로 새 토큰 발급 후 재시도
-          if (response.status === 401) {
-            const refreshToken = localStorage.getItem('refresh_token');
-            if (!refreshToken) { window.location.href = '/login'; return; }
-
-            const refreshResponse = await fetch('/api/v1/auth/refresh', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ refresh_token: refreshToken })
-            });
-
-            //리프레시토큰도 만료되면 로그인페이지로 이동
-            if (!refreshResponse.ok) { window.location.href = '/login'; return; }
-
-            const refreshData = await refreshResponse.json();
-            token = refreshData.access_token; //새토큰 받으면
-            localStorage.setItem('access_token', token); //업데이트
-            localStorage.setItem('refresh_token', refreshData.refresh_token);
-            return loadUserInfo();
-          }
-
-          //토큰만료 외 에러 시 로그인페이지로 이동
-          if (!response.ok) {
-            window.location.href = '/login';
-            return;
-          }
-
+          const response = await authFetch('/api/v1/auth/me');
+          if (!response || !response.ok) return;
 
           const user = await response.json();
           document.getElementById('profile-name').textContent = user.username; //프로필칸 유저정보 표시용
@@ -108,12 +73,9 @@
         }
 
         try {
-          const response = await fetch('/api/v1/auth/me', {
+          const response = await authFetch('/api/v1/auth/me', {
             method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               username,
               position,
@@ -158,12 +120,9 @@
         if (!password) { alert('비밀번호를 입력해주세요.'); return; }
 
         try {
-          const response = await fetch('/api/v1/auth/me', {
+          const response = await authFetch('/api/v1/auth/me', {
             method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password })
           });
 
@@ -184,7 +143,7 @@
       // 통계 데이터 로드
       async function loadStats() {
         try {
-          const res = await fetch('/api/v1/feedback/stats', { headers: { 'Authorization': `Bearer ${token}` } });
+          const res = await authFetch('/api/v1/feedback/stats');
 
           if (res.ok) {
             const data = await res.json();
