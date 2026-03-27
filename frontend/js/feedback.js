@@ -169,16 +169,17 @@ function renderFeedback(data) {
     qContainer.appendChild(item);
   });
 
-  // 질문 아코디언 이벤트 위임 등록
-  qContainer.addEventListener('click', function(e) {
-    const header = e.target.closest('.question-header');
-    if (header) toggleQuestion(header);
-  });
-
   // 콘텐츠 표시
   document.getElementById('loading-state').style.display  = 'none';
   document.getElementById('feedback-content').style.display = 'block';
 }
+
+// ── 아코디언 이벤트 (딱 한 번만 등록) ────────────────────────────────
+
+document.getElementById('question-feedbacks').addEventListener('click', function(e) {
+  const header = e.target.closest('.question-header');
+  if (header) toggleQuestion(header);
+});
 
 // ── 아코디언 토글 ─────────────────────────────────────────────────────
 
