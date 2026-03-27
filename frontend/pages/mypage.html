@@ -28,19 +28,19 @@
             <div id="profile-position" class="profile-position">희망 직무 : --</div>
             <div class="profile-stats">
               <div class="stat-item">
-                <div class="stat-value">-</div>
+                <div id="stat-total" class="stat-value">-</div>
                 <div class="stat-label">총 면접 횟수</div>
               </div>
               <div class="stat-item">
-                <div class="stat-value">-</div>
+                <div id="stat-avg" class="stat-value">-</div>
                 <div class="stat-label">평균 점수</div>
               </div>
               <div class="stat-item">
-                <div class="stat-value">-</div>
+                <div id="stat-best" class="stat-value">-</div>
                 <div class="stat-label">최고 점수</div>
               </div>
               <div class="stat-item">
-                <div class="stat-value">-</div>
+                <div id="stat-weekly" class="stat-value">-</div>
                 <div class="stat-label">이번 주</div>
               </div>
             </div>
@@ -217,7 +217,8 @@
             document.getElementById('input-new-password').value='';
             document.getElementById('input-confirm-password').value='';
           } else {
-            alert('프로필 수정에 실패했습니다.');
+            const errorData = await response.json();
+            alert(errorData.detail);
             document.getElementById('input-current-password').value='';
             document.getElementById('input-new-password').value='';
             document.getElementById('input-confirm-password').value='';
@@ -269,8 +270,33 @@
         window.location.href = '/login'; //로그인페이지 이동
       });
       
+      // 통계 데이터 로드
+      async function loadStats() {
+        try {
+          const [weeklyRes, totalRes] = await Promise.all([
+            fetch('/api/v1/auth/stats/weekly', { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch('/api/v1/auth/stats/total', { headers: { 'Authorization': `Bearer ${token}` } })
+          ]);
+
+          if (weeklyRes.ok) {
+            const weeklyData = await weeklyRes.json();
+            document.getElementById('stat-weekly').textContent = weeklyData.weekly_interviews;
+          }
+
+          if (totalRes.ok) {
+            const totalData = await totalRes.json();
+            document.getElementById('stat-total').textContent = totalData.total_count;
+            document.getElementById('stat-avg').textContent = totalData.avg_score;
+            document.getElementById('stat-best').textContent = totalData.best_score;
+          }
+        } catch (error) {
+          console.error('통계 데이터를 불러오는 데 실패했습니다.', error);
+        }
+      }
+
       //토큰 있으면 사용자 정보 화면에 표시
       loadUserInfo();
+      loadStats();
     })();
     </script>
     <script src="/js/auth-nav.js"></script>
