@@ -130,6 +130,12 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
 
     # 3. 최대 질문 수 초과 시 면접 종료
     if current_question_number >= MAX_QUESTIONS:
+        update_fields = {"status": "finished", "finished_at": now}
+        if request.eye_contact is not None:
+            update_fields["eye_contact"] = request.eye_contact
+        if request.posture_safety_rate is not None:
+            update_fields["posture_safety_rate"] = request.posture_safety_rate
+            
         await db["interviews"].update_one(
             {"_id": request.session_id},
             {"$set": {"status": "finished", "finished_at": now}},

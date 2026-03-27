@@ -25,6 +25,9 @@ class AnswerRequest(BaseModel):
     answer_content: str
     # STT 원본 텍스트 (models.Answer.stt_raw_text 대응)
     stt_raw_text: str | None = None
+    # AnswerRequest 클래스 안에 추가
+    eye_contact: int | None = None
+    posture_safety_rate: int | None = None
 
 
 class AnswerResponse(BaseModel):
