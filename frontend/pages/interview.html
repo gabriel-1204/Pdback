@@ -6,8 +6,12 @@
   <title>면접 진행 - P:dback</title>
   <!-- 절대경로 -->
   <link rel="stylesheet" href="/css/common.css">
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.mjs"
-    crossorigin="anonymous"></script>
+  <script type="module">
+    import { FilesetResolver, FaceLandmarker, PoseLandmarker } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.34/vision_bundle.mjs";
+    window.FilesetResolver = FilesetResolver;
+    window.FaceLandmarker = FaceLandmarker;
+    window.PoseLandmarker = PoseLandmarker;
+  </script>
 </head>
 <body>
 
@@ -21,36 +25,41 @@
   </div>
 </nav>
 
-<div class="page-container">
-  <div class="page-content" style="padding: 24px;">
+<div class="page-container interview-page-container">
+  <div class="page-content interview-page">
     <div class="interview-layout">
-      <!-- 웹캠 영역 -->
-      <div class="webcam-area">
-        <div class="webcam-status">
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span class="status-dot green"></span>
-            <span class="status-label">카메라 ON</span>
+      <!-- 웹캠 + 태도 분석 -->
+      <div class="webcam-wrapper">
+        <div class="webcam-topbar">
+          <div class="webcam-status">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span class="status-dot green"></span>
+              <span class="status-label">카메라 ON</span>
+            </div>
+            <div id="stt-status" style="display:flex;align-items:center;gap:4px;">
+              <span class="status-dot" id="stt-dot"></span>
+              <span class="status-label" id="stt-label">마이크 OFF</span>
+            </div>
           </div>
-          <div id="stt-status" style="display:flex;align-items:center;gap:4px;">
-            <span class="status-dot" id="stt-dot"></span>
-            <span class="status-label" id="stt-label">마이크 OFF</span>
-          </div>
+          <div class="timer-badge">⏱ 00:00</div>
         </div>
-        <div class="timer-badge">⏱ 00:00</div>
-        <div class="webcam-placeholder"><video id="webcam" autoplay playsinline muted></video></div>
-        <div style="font-size:14px;opacity:0.6;">웹캠 미리보기</div>
+        <div class="webcam-area">
+          <video id="webcam" autoplay playsinline muted></video>
+          <canvas id="landmark-canvas"></canvas>
+        </div>
         <div class="attitude-bar">
-          <div class="attitude-bar-title">실시간 태도 분석 (MediaPipe)</div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-            <span>시선 정면 주시율</span>
-            <span>--%</span>
+          <div class="attitude-row">
+            <span class="attitude-icon">👁</span>
+            <span class="attitude-label">시선</span>
+            <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
+            <span class="attitude-value" id="eye-rate">--%</span>
           </div>
-          <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin:6px 0 4px;">
-            <span>자세 안정도</span>
-            <span>--%</span>
+          <div class="attitude-row">
+            <span class="attitude-icon">🧍</span>
+            <span class="attitude-label">자세</span>
+            <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
+            <span class="attitude-value" id="posture-rate">--%</span>
           </div>
-          <div class="attitude-meter"><div class="attitude-meter-fill" style="width:0%"></div></div>
         </div>
       </div>
 
@@ -70,20 +79,29 @@
 
     <!-- STT 입력 영역 (레이아웃 아래 전체 너비) -->
     <div class="stt-bottom-area">
-      <div class="stt-text-box">
-          <span id="final-span"></span>
-        <span id="interim-span" style="color:#999;"></span>
-      </div>
+      <div class="stt-final-box"><span id="final-span"></span></div>
+      <div class="stt-interim-box"><span id="interim-span"></span></div>
       <div class="stt-controls">
-        <span style="font-size:11px;color:#999;">스페이스바로도 시작/완료할 수 있습니다</span>
+        <span class="stt-hint">스페이스바로도 시작/완료할 수 있습니다</span>
         <button class="btn-primary" id="toggle-btn" disabled>답변 시작</button>
-        <button class="btn-primary" id="next-session-btn" disabled>다음 세션 시작</button>
       </div>
     </div>
   </div>
 </div>
+
+<!-- 세션 완료 모달 -->
+<div class="session-modal-overlay" id="session-modal" style="display:none;">
+  <div class="session-modal">
+    <div class="session-modal-icon">&#10004;&#65039;</div>
+    <h3 class="session-modal-title" id="session-modal-title"></h3>
+    <p class="session-modal-desc" id="session-modal-desc"></p>
+    <button class="btn-primary session-modal-btn" id="next-session-btn">다음 세션 시작</button>
+  </div>
+</div>
+
 <script src="/js/auth-fetch.js"></script>
 <script src="/js/webcam.js"></script>
+<script src="/js/mediapipe_analysis.js"></script>
 <script src="/js/sound_detection.js"></script>
 <script src="/js/auth-nav.js"></script>
 </body>

@@ -22,6 +22,30 @@ let isSubmitting = false;
 let recognition = null;
 let questionNumber = 0;
 let followUpCount = 0;
+
+// 답변 타이머 (isRecording일 때만 누적)
+let timerSeconds = 0;
+let timerInterval = null;
+const timerBadge = document.querySelector(".timer-badge");
+
+function updateTimerDisplay() {
+    const m = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+    const s = String(timerSeconds % 60).padStart(2, "0");
+    if (timerBadge) timerBadge.textContent = `⏱ ${m}:${s}`;
+}
+
+function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
 let currentSession = parseInt(localStorage.getItem("current_session") ?? "1");
 const MAX_QUESTIONS = 5;
 const MAX_SESSIONS = parseInt(localStorage.getItem("max_sessions") ?? "1");
@@ -86,13 +110,21 @@ async function submitAnswer() {
 
         if (toggleBtn) toggleBtn.disabled = true;
 
+        const bodyData = {
+            session_id: sessionIdInput.value,
+            answer_content: answerText,
+        };
+        // 마지막 질문일 때 MediaPipe 태도 분석 데이터 포함
+        if (questionNumber >= MAX_QUESTIONS && typeof getMediaPipeResults === "function") {
+            const mp = getMediaPipeResults();
+            bodyData.eye_contact = mp.eye_contact;
+            bodyData.posture_safety_rate = mp.posture_safety_rate;
+        }
+
         const res = await authFetch("/api/v1/interview/answer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                session_id: sessionIdInput.value,
-                answer_content: answerText,
-            })
+            body: JSON.stringify(bodyData)
         });
         if (!res) return;
 
@@ -107,17 +139,26 @@ async function submitAnswer() {
 if (data.is_finished) {
     isFinished = true;
     if (toggleBtn) toggleBtn.disabled = true;
+    stopTimer();
+
+    const modal = document.getElementById("session-modal");
+    const modalTitle = document.getElementById("session-modal-title");
+    const modalDesc = document.getElementById("session-modal-desc");
+
     if (currentSession < MAX_SESSIONS) {
         addAIBubble(`${currentSession}/${MAX_SESSIONS} 세션 완료! 수고하셨습니다.`);
-        if (nextSessionBtn) nextSessionBtn.disabled = false;
+        if (modalTitle) modalTitle.textContent = `세션 ${currentSession}/${MAX_SESSIONS} 완료!`;
+        if (modalDesc) modalDesc.textContent = "수고하셨습니다. 다음 세션을 시작하시겠습니까?";
+        if (nextSessionBtn) nextSessionBtn.textContent = "다음 세션 시작";
     } else {
         addAIBubble(`모든 ${MAX_SESSIONS}개 세션이 종료되었습니다. 수고하셨습니다!`);
         localStorage.removeItem("current_session");
-        if (nextSessionBtn) {
-            nextSessionBtn.textContent = "히스토리로 이동";
-            nextSessionBtn.disabled = false;
-        }
+        if (modalTitle) modalTitle.textContent = "면접 종료!";
+        if (modalDesc) modalDesc.textContent = `모든 ${MAX_SESSIONS}개 세션이 완료되었습니다. 수고하셨습니다!`;
+        if (nextSessionBtn) nextSessionBtn.textContent = "히스토리로 이동";
     }
+    if (modal) modal.style.display = "flex";
+    if (nextSessionBtn) nextSessionBtn.disabled = false;
 } else {
             addAIBubble(data.follow_up_question);
             followUpCount++;
@@ -148,7 +189,8 @@ function toggleRecording() {
         recognition.start();
         isRecording = true;
         updateMicUI(true);
-        
+        startTimer();
+
     } else {
         // ON → OFF: 녹음 중지 + 답변 제출
         // interim 텍스트가 final로 확정되기 전에 멈출 수 있으므로 합산
@@ -159,6 +201,7 @@ function toggleRecording() {
         recognition.stop();
         isRecording = false;
         updateMicUI(false);
+        stopTimer();
         submitAnswer();
     }
 }
