@@ -242,7 +242,20 @@ if (nextSessionBtn) {
 // 피드백 버튼 이벤트
 const feedbackBtn = document.getElementById("feedback-btn");
 if (feedbackBtn) {
-    feedbackBtn.addEventListener("click", function () {
+    feedbackBtn.addEventListener("click", async function () {
+        feedbackBtn.disabled = true;
+        feedbackBtn.textContent = "피드백 생성 중...";
+
+        try {
+            await authFetch("/api/v1/feedback/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sessionIdInput.value })
+            });
+        } catch (e) {
+            // 생성 실패해도 이동 진행 (이미 존재할 수 있음)
+        }
+
         window.location.href = `/feedback?id=${sessionIdInput.value}`;
     });
 }
