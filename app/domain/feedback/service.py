@@ -4,17 +4,24 @@ from datetime import datetime, timedelta
 
 from fastapi import HTTPException
 
-from app.domain.feedback.schema import (
-    FeedbackResponse, QuestionFeedbackResponse,
-    PostureSummaryResponse, HistoryResponse, UserStatsResponse)
-from app.domain.feedback.models import (
-    AiFeedback, PostureSummary,
-    FeedbackDocument, QuestionFeedback)
-from app.domain.interview.models import InterviewDocument
-from app.domain.feedback.prompt import get_feedback_prompt
-from app.services.gemini import get_client
-from app.database import get_database
 from app.config import KST
+from app.database import get_database
+from app.domain.feedback.models import (
+    AiFeedback,
+    FeedbackDocument,
+    PostureSummary,
+    QuestionFeedback,
+)
+from app.domain.feedback.prompt import get_feedback_prompt
+from app.domain.feedback.schema import (
+    FeedbackResponse,
+    HistoryResponse,
+    PostureSummaryResponse,
+    QuestionFeedbackResponse,
+    UserStatsResponse,
+)
+from app.domain.interview.models import InterviewDocument
+from app.services.gemini import get_client
 
 GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 
@@ -145,9 +152,9 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
     questions = [q.question_content for q in interview.questions]
     answers = []
     for q in interview.questions:
-        if q.answer:                      
+        if q.answer:
             answers.append(q.answer.answer_content)
-        else:  
+        else:
             answers.append("")
 
     # 피드백 프롬프트 생성
@@ -173,7 +180,7 @@ async def _generate_ai_feedback(interview: InterviewDocument) -> AiFeedback:
     raw = response.text.strip()       # gemini 응답 텍스트 꺼내기
     try:
         data = json.loads(raw)        # 깔끔한 json이면 바로 딕셔너리 파싱
-    except json.JSONDecodeError:      # json이 아니라 마크다운에 싸여있는 경우    
+    except json.JSONDecodeError:      # json이 아니라 마크다운에 싸여있는 경우
         raw = re.sub(r"^```(?:json)?\s*", "", raw)    # 앞쪽 ```json -> 빈 문자열로 대체
         raw = re.sub(r"\s*```$", "", raw).strip()     # 뒤쪽 ``` -> 빈 문자열로 대체
         try:
@@ -214,16 +221,16 @@ def _process_posture(interview: InterviewDocument) -> PostureSummary:
     eyes_score = interview.eye_contact
     attitude_score = round((eyes_score * 0.4 + posture_score * 0.6) / 10, 1)
 
-    # 테스트 후 숫자 변경, 조건문 범위 변경 가능성 있음/ 단계: 부족-> 보통-> 완벽
+    # 단계: 부족(60미만) -> 보통(60~80) -> 완벽(80이상)
     if eyes_score >= 80 and posture_score >= 80: # 전부 80 이상. 모두 완벽!
         comment = "시선 처리와 자세 모두 안정적이었습니다. 면접 내내 자신감 있는 태도를 유지했습니다."
     elif eyes_score >= 80 and 60 <= posture_score < 80: # 시선 완벽/ 자세 보통
         comment = "시선 처리는 훌륭했습니다. 자세를 조금만 더 바르게 유지한다면 더욱 좋은 인상을 줄 수 있습니다."
-    elif eyes_score >= 80 and posture_score < 60: # 시선 완벽/ 자세 부족    
+    elif eyes_score >= 80 and posture_score < 60: # 시선 완벽/ 자세 부족
         comment = "시선 처리는 좋았으나, 자세가 많이 흐트러졌습니다. 앉은 자세를 의식적으로 바르게 유지해보세요."
     elif 60 <= eyes_score < 80 and posture_score >= 80: # 시선 보통/ 자세 완벽
         comment = "자세는 훌륭했습니다. 카메라를 조금만 더 자주 응시한다면 더욱 자신감 있어 보일 것입니다."
-    elif eyes_score < 60 and posture_score >= 80: # 시선 부족/ 자세 완벽        
+    elif eyes_score < 60 and posture_score >= 80: # 시선 부족/ 자세 완벽
         comment = "자세는 안정적이었으나, 카메라 응시가 많이 부족했습니다. 면접관(카메라)을 자주 바라보는 연습을 해보세요."
     elif eyes_score >= 60 and posture_score >= 60: # 시선 보통/ 자세 보통
         comment = "시선 처리와 자세 모두 나쁘지 않았습니다. 전반적으로 조금만 더 자신감 있게 임해보세요."
@@ -242,7 +249,6 @@ def _process_posture(interview: InterviewDocument) -> PostureSummary:
     )
 
 
-# 수정, 검토중
 def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> FeedbackResponse:
     """DB 데이터 -> 응답 변환"""
     # question_number 기준으로 model_answer 매핑 딕셔너리 생성

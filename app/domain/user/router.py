@@ -1,7 +1,16 @@
 from fastapi import APIRouter, Depends
+
 from app.domain.user import service
 from app.domain.user.dependency import get_current_user
-from app.domain.user.schemas import UserDelete, UserLogin, UserRegister, UserResponse, UserUpdate, TokenRefresh, TokenResponse
+from app.domain.user.schemas import (
+    TokenRefresh,
+    TokenResponse,
+    UserDelete,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+    UserUpdate,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

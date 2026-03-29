@@ -230,13 +230,16 @@ if (feedbackBtn) {
         feedbackBtn.textContent = "피드백 생성 중...";
 
         try {
-            await authFetch("/api/v1/feedback/generate", {
+            const res = await authFetch("/api/v1/feedback/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: sessionIdInput.value })
             });
+            if (res && !res.ok && res.status !== 409) {
+                alert("피드백 생성에 실패했습니다. 히스토리에서 다시 시도해주세요.");
+            }
         } catch (e) {
-            // 생성 실패해도 이동 진행 (이미 존재할 수 있음)
+            alert("피드백 생성 중 오류가 발생했습니다.");
         }
 
         window.location.href = `/feedback?id=${sessionIdInput.value}`;
@@ -254,7 +257,12 @@ document.addEventListener("keydown", function(e) {
 // 면접 시작 → 첫 질문 받아오기
 async function startInterview() {
     const jobRole = localStorage.getItem("job_role") ?? "백엔드";
-    const techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
+    let techStack;
+    try {
+        techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
+    } catch {
+        techStack = ["Python"];
+    }
     const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
 
     try {

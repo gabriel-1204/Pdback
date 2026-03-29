@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
-from fastapi.staticfiles import StaticFiles
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+
 from app.api.v1.router import v1_router
 from app.config import settings
 from app.database import close_db, connect_db
@@ -32,8 +34,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # 라우터 등록
@@ -60,7 +62,7 @@ async def root(request: Request):
 
 @app.get("/register")
 async def register_page(request: Request):
-    return templates.TemplateResponse("pages/register.html", {"request": request}) 
+    return templates.TemplateResponse("pages/register.html", {"request": request})
 
 @app.get("/mypage")
 async def mypage_page(request: Request):

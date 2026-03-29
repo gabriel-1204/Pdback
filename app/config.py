@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5500"
 
     # App
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     @property
     def cors_origins_list(self) -> list[str]:
