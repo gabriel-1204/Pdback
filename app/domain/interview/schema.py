@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class InterviewStartRequest(BaseModel):
@@ -26,8 +26,8 @@ class AnswerRequest(BaseModel):
     # STT 원본 텍스트 (models.Answer.stt_raw_text 대응)
     stt_raw_text: str | None = None
     # AnswerRequest 클래스 안에 추가
-    eye_contact: int | None = None
-    posture_safety_rate: int | None = None
+    eye_contact: int | None = Field(default=None, ge=0, le=100)
+    posture_safety_rate: int | None = Field(default=None, ge=0, le=100)
 
 
 class AnswerResponse(BaseModel):
