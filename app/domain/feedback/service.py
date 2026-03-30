@@ -255,6 +255,7 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
     model_answers = {q.question_number: q.model_answer for q in interview.questions}
     question_contents = {q.question_number: q.question_content for q in interview.questions}
     answer_contents = {q.question_number: q.answer.answer_content for q in interview.questions if q.answer}
+    duration_seconds = {q.question_number: q.answer.duration_seconds for q in interview.questions if q.answer}
 
     question_feedbacks = [
         QuestionFeedbackResponse(
@@ -264,6 +265,7 @@ def _to_response(doc: FeedbackDocument, interview: InterviewDocument) -> Feedbac
             model_answer=model_answers.get(qf.question_number, ""),
             question_content=question_contents.get(qf.question_number, ""),
             answer_content=answer_contents.get(qf.question_number, ""),
+            duration_seconds=duration_seconds.get(qf.question_number, 0),
         )
         for qf in doc.ai_feedback.question_feedbacks
     ]

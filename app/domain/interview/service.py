@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from google.genai import types
@@ -108,7 +108,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         started_at = datetime.fromisoformat(str(question_created_at))
     # MongoDB에서 읽어온 naive datetime에 KST 부여
     if started_at.tzinfo is None:
-        started_at = started_at.replace(tzinfo=KST)
+        started_at = started_at.replace(tzinfo=timezone.utc).astimezone(KST)
     ended_at = now
     duration_seconds = int((ended_at - started_at).total_seconds())
 
