@@ -91,7 +91,8 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         )
     if doc["user_id"] != user_id:
         raise HTTPException(status_code=403, detail="본인의 면접 세션만 접근할 수 있습니다.")
-
+    if doc.get("status") != "in_progress":
+        raise HTTPException(status_code=400, detail="이미 종료된 면접입니다.")
 
     questions: list[dict] = doc.get("questions", [])
     current_question_number = len(questions)  # 현재까지 질문 수
@@ -135,10 +136,10 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
             update_fields["eye_contact"] = request.eye_contact
         if request.posture_safety_rate is not None:
             update_fields["posture_safety_rate"] = request.posture_safety_rate
-            
+
         await db["interviews"].update_one(
             {"_id": request.session_id},
-            {"$set": {"status": "finished", "finished_at": now}},
+            {"$set": update_fields},
         )
         return AnswerResponse(is_finished=True)
 

@@ -52,9 +52,9 @@ def build_system_prompt(
     """시스템 프롬프트를 생성합니다."""
     # 0년차는 "신입"으로 표시, 나머지는 "N년차" 형태로 변환
     experience_level = "신입" if experience_years == 0 else f"{experience_years}년차"
-    return SYSTEM_PROMPT_TEMPLATE.format(   # 시스템 프롬포트에 format 으로 빈칸을 채워줍니다 
+    return SYSTEM_PROMPT_TEMPLATE.format(   # 시스템 프롬포트에 format 으로 빈칸을 채워줍니다
         experience_level=experience_level,  # 신입 , N년차
-        job_role=job_role,                  # 직무명  
+        job_role=job_role,                  # 직무명
         tech_stack=", ".join(tech_stack),   # 기술스택
     )
 

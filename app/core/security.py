@@ -1,8 +1,10 @@
 #JWT 인증 미들웨어
 
-from jwt import encode, decode
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+from jwt import decode, encode
 from passlib.context import CryptContext
+
 from app.config import settings
 
 SECRET_KEY = settings.SECRET_KEY
@@ -27,7 +29,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 def create_access_token(data: dict) -> str:
     """엑세스 토큰을 생성하여 반환한다(설정한 유효시간 : 30분)"""
     encode_data = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES) 
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     encode_data.update({"exp": expire})
     return encode(encode_data, SECRET_KEY, algorithm=ALGORITHM)
 

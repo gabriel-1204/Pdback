@@ -1,10 +1,6 @@
 const API_BASE = '/api/v1';
 
-// ── 유틸 ─────────────────────────────────────────────────────────────
-
-function getToken() {
-  return localStorage.getItem('access_token');
-}
+// ── 유틸 (getToken, scoreClass, escapeHtml → utils.js) ──────────────
 
 function showError(msg) {
   document.getElementById('loading-state').style.display = 'none';
@@ -12,32 +8,18 @@ function showError(msg) {
   document.getElementById('error-message').textContent  = msg;
 }
 
-function scoreClass(score, max) {
-  const ratio = score / max;
-  if (ratio >= 0.7) return 'high';
-  if (ratio >= 0.4) return 'mid';
-  return 'low';
-}
-
 // ── API 호출 ──────────────────────────────────────────────────────────
 
-async function generateFeedback(sessionId, token) {
-  const res = await fetch(`${API_BASE}/feedback/generate`, {
+async function generateFeedback(sessionId) {
+  const res = await authFetch(`${API_BASE}/feedback/generate`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ session_id: sessionId })
   });
+  if (!res) return null;
 
-  if (res.status === 401) {
-    window.location.href = '/login';
-    return null;
-  }
   if (res.status === 409) {
-    // 이미 생성된 피드백 → GET으로 조회
-    return await getFeedback(sessionId, token);
+    return await getFeedback(sessionId);
   }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -46,14 +28,10 @@ async function generateFeedback(sessionId, token) {
   return await res.json();
 }
 
-async function getFeedback(interviewId, token) {
-  const res = await fetch(`${API_BASE}/feedback/${interviewId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  if (res.status === 401) {
-    window.location.href = '/login';
-    return null;
-  }
+async function getFeedback(interviewId) {
+  const res = await authFetch(`${API_BASE}/feedback/${interviewId}`);
+  if (!res) return null;
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || '피드백 조회에 실패했습니다.');
@@ -189,21 +167,10 @@ function toggleQuestion(header) {
   body.classList.toggle('open', isOpen);
 }
 
-// ── XSS 방지 ─────────────────────────────────────────────────────────
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // ── 진입점 ────────────────────────────────────────────────────────────
 
 async function init() {
-  const token = getToken();
-  if (!token) {
+  if (!getToken()) {
     window.location.href = '/login';
     return;
   }
@@ -215,9 +182,9 @@ async function init() {
   try {
     let data;
     if (sessionId) {
-      data = await generateFeedback(sessionId, token);
+      data = await generateFeedback(sessionId);
     } else if (feedbackId) {
-      data = await getFeedback(feedbackId, token);
+      data = await getFeedback(feedbackId);
     } else {
       showError('피드백 ID가 없습니다. 올바른 경로로 접근해주세요.');
       return;

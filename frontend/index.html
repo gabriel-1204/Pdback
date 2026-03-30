@@ -7,7 +7,41 @@
   <link rel="stylesheet" href="css/common.css">
   <style>
     .landing { text-align: center; padding: 80px 0; }
-    .landing-logo { font-size: 48px; font-weight: 800; color: #4A6CF7; margin-bottom: 16px; }
+    .landing-logo {
+      font-size: 48px; font-weight: 800; color: #4A6CF7; margin-bottom: 16px;
+      display: inline-block; position: relative;
+      cursor: default; user-select: none;
+      animation: logo-float 3s ease-in-out infinite;
+      transition: transform 0.15s ease-out;
+    }
+    @keyframes logo-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .eye-letter {
+      position: relative;
+      display: inline-block;
+    }
+    .eyeball {
+      position: absolute;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      top: 60%; left: 50%;
+      transform: translate(-50%, -50%);
+      overflow: hidden;
+      pointer-events: none;
+      border: 2px solid #3955d3;
+    }
+    .pupil {
+      position: absolute;
+      width: 8px; height: 8px;
+      background: #1a1a2e;
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform 0.08s ease-out;
+    }
     .landing-desc { font-size: 18px; color: #666; margin-bottom: 40px; }
     .landing-buttons { display: flex; gap: 16px; justify-content: center; }
     .landing-buttons a { text-decoration: none; }
@@ -29,7 +63,7 @@
 <div class="page-container">
   <div class="page-content">
     <div class="landing">
-      <div class="landing-logo">P:dback</div>
+      <div class="landing-logo">P:<span class="eye-letter">d<span class="eyeball"><span class="pupil"></span></span></span><span class="eye-letter">b<span class="eyeball"><span class="pupil"></span></span></span>ack</div>
       <p class="landing-desc">AI 면접 코치와 함께 면접 실력을 키워보세요</p>
       <div class="landing-buttons" id="landing-buttons">
         <!-- auth-nav.js에서 로그인 상태에 따라 버튼 교체 -->
@@ -38,6 +72,33 @@
   </div>
 </div>
 
+<script>
+(function() {
+  const logo = document.querySelector('.landing-logo');
+  if (!logo) return;
+
+  const pupils = document.querySelectorAll('.pupil');
+  const MAX_MOVE = 3;
+
+  document.addEventListener('mousemove', function(e) {
+
+    // 눈동자 추적
+    pupils.forEach(function(pupil) {
+      const eye = pupil.parentElement;
+      const er = eye.getBoundingClientRect();
+      const ecx = er.left + er.width / 2;
+      const ecy = er.top + er.height / 2;
+      const edx = e.clientX - ecx;
+      const edy = e.clientY - ecy;
+      const angle = Math.atan2(edy, edx);
+      const edist = Math.min(Math.sqrt(edx * edx + edy * edy) / 80, 1);
+      const mx = Math.cos(angle) * MAX_MOVE * edist;
+      const my = Math.sin(angle) * MAX_MOVE * edist;
+      pupil.style.transform = `translate(calc(-50% + ${mx}px), calc(-50% + ${my}px))`;
+    });
+  });
+})();
+</script>
 <script src="/js/auth-nav.js"></script>
 </body>
 </html>

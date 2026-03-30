@@ -1,8 +1,19 @@
-const video = document.getElementById("webcam");
-const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-video.srcObject = stream;
+// 웹캠 스트림 연결
+async function startWebcam() {
+    const video = document.getElementById("webcam");
+    if (!video) return null;
 
-const eyeRate = totalFrames > 0
-  ? (eyeFrames / totalFrames * 100)
-  : 0;
-// attitude-meter-fill의 width와 텍스트 업데이트
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        return stream;
+    } catch (err) {
+        console.error("[webcam] 카메라 접근 실패:", err);
+        return null;
+    }
+}
+
+// 페이지 로드 시 자동 시작
+document.addEventListener("DOMContentLoaded", () => {
+    startWebcam();
+});

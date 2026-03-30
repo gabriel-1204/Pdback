@@ -22,9 +22,31 @@ let isSubmitting = false;
 let recognition = null;
 let questionNumber = 0;
 let followUpCount = 0;
-let currentSession = parseInt(localStorage.getItem("current_session") ?? "1");
+
+// 답변 타이머 (isRecording일 때만 누적)
+let timerSeconds = 0;
+let timerInterval = null;
+const timerBadge = document.querySelector(".timer-badge");
+
+function updateTimerDisplay() {
+    const m = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+    const s = String(timerSeconds % 60).padStart(2, "0");
+    if (timerBadge) timerBadge.textContent = `⏱ ${m}:${s}`;
+}
+
+function startTimer() {
+    if (timerInterval) return;
+    timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
 const MAX_QUESTIONS = 5;
-const MAX_SESSIONS = 2;
 const questionCounter = document.querySelector(".chat-header span");
 
 // AI 말풍선을 채팅창에 추가
@@ -84,17 +106,23 @@ async function submitAnswer() {
 
         if (toggleBtn) toggleBtn.disabled = true;
 
-        const res = await fetch("/api/v1/interview/answer", {
+        const bodyData = {
+            session_id: sessionIdInput.value,
+            answer_content: answerText,
+        };
+        // 마지막 질문일 때 MediaPipe 태도 분석 데이터 포함
+        if (questionNumber >= MAX_QUESTIONS && typeof getMediaPipeResults === "function") {
+            const mp = getMediaPipeResults();
+            bodyData.eye_contact = mp.eye_contact;
+            bodyData.posture_safety_rate = mp.posture_safety_rate;
+        }
+
+        const res = await authFetch("/api/v1/interview/answer", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-            },
-            body: JSON.stringify({
-                session_id: sessionIdInput.value,
-                answer_content: answerText,
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(bodyData)
         });
+        if (!res) return;
 
         if (!res.ok) {
             addAIBubble("답변 제출에 실패했습니다. 다시 시도해주세요.");
@@ -107,17 +135,20 @@ async function submitAnswer() {
 if (data.is_finished) {
     isFinished = true;
     if (toggleBtn) toggleBtn.disabled = true;
-    if (currentSession < MAX_SESSIONS) {
-        addAIBubble(`${currentSession}/${MAX_SESSIONS} 세션 완료! 수고하셨습니다.`);
-        if (nextSessionBtn) nextSessionBtn.disabled = false;
-    } else {
-        addAIBubble(`모든 ${MAX_SESSIONS}개 세션이 종료되었습니다. 수고하셨습니다!`);
-        localStorage.removeItem("current_session");
-        if (nextSessionBtn) {
-            nextSessionBtn.textContent = "히스토리로 이동";
-            nextSessionBtn.disabled = false;
-        }
-    }
+    stopTimer();
+
+    const modal = document.getElementById("session-modal");
+    const modalTitle = document.getElementById("session-modal-title");
+    const modalDesc = document.getElementById("session-modal-desc");
+
+    addAIBubble("면접이 종료되었습니다. 수고하셨습니다!");
+    if (modalTitle) modalTitle.textContent = "면접 종료!";
+    if (modalDesc) modalDesc.textContent = "수고하셨습니다!";
+    if (nextSessionBtn) nextSessionBtn.textContent = "히스토리로 이동";
+    const feedbackBtn = document.getElementById("feedback-btn");
+    if (feedbackBtn) feedbackBtn.style.display = "block";
+    if (modal) modal.style.display = "flex";
+    if (nextSessionBtn) nextSessionBtn.disabled = false;
 } else {
             addAIBubble(data.follow_up_question);
             followUpCount++;
@@ -148,7 +179,8 @@ function toggleRecording() {
         recognition.start();
         isRecording = true;
         updateMicUI(true);
-        
+        startTimer();
+
     } else {
         // ON → OFF: 녹음 중지 + 답변 제출
         // interim 텍스트가 final로 확정되기 전에 멈출 수 있으므로 합산
@@ -159,6 +191,7 @@ function toggleRecording() {
         recognition.stop();
         isRecording = false;
         updateMicUI(false);
+        stopTimer();
         submitAnswer();
     }
 }
@@ -175,27 +208,43 @@ if (nextSessionBtn) {
         nextSessionBtn.textContent = "피드백 저장 중...";
 
         try {
-            await fetch("/api/v1/feedback/generate", {
+            await authFetch("/api/v1/feedback/generate", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ session_id: sessionIdInput.value })
             });
         } catch (e) {
             // 피드백 저장 실패해도 이동은 진행
         }
 
-        if (currentSession < MAX_SESSIONS) {
-            localStorage.setItem("current_session", currentSession + 1);
-            window.location.href = '/interview';
-        } else {
-            window.location.href = '/history';
-        }
+        window.location.href = '/history';
     });
 }
 
+
+// 피드백 버튼 이벤트
+const feedbackBtn = document.getElementById("feedback-btn");
+if (feedbackBtn) {
+    feedbackBtn.addEventListener("click", async function () {
+        feedbackBtn.disabled = true;
+        feedbackBtn.textContent = "피드백 생성 중...";
+
+        try {
+            const res = await authFetch("/api/v1/feedback/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sessionIdInput.value })
+            });
+            if (res && !res.ok && res.status !== 409) {
+                alert("피드백 생성에 실패했습니다. 히스토리에서 다시 시도해주세요.");
+            }
+        } catch (e) {
+            alert("피드백 생성 중 오류가 발생했습니다.");
+        }
+
+        window.location.href = `/feedback?id=${sessionIdInput.value}`;
+    });
+}
 
 // 스페이스바 단축키
 document.addEventListener("keydown", function(e) {
@@ -208,22 +257,25 @@ document.addEventListener("keydown", function(e) {
 // 면접 시작 → 첫 질문 받아오기
 async function startInterview() {
     const jobRole = localStorage.getItem("job_role") ?? "백엔드";
-    const techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
+    let techStack;
+    try {
+        techStack = JSON.parse(localStorage.getItem("tech_stack") ?? '["Python"]');
+    } catch {
+        techStack = ["Python"];
+    }
     const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
 
     try {
-        const res = await fetch("/api/v1/interview/start", {
+        const res = await authFetch("/api/v1/interview/start", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 job_role: jobRole,
                 tech_stack: techStack,
                 experience_years: experienceYears
             })
         });
+        if (!res) return;
 
         if (!res.ok) {
             addAIBubble("면접을 시작할 수 없습니다. 페이지를 새로고침 해주세요.");
