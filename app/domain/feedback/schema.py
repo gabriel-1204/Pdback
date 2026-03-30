@@ -14,6 +14,7 @@ class QuestionFeedbackResponse(BaseModel):
     model_answer: str        # 모범답안
     question_content: str    # 피드백 페이지에서 (상세보기) 누르면 질문내용 확인가능하게
     answer_content: str      # 피드백 페이지에서 (상세보기) 누르면 내 답변 확인가능하게
+    duration_seconds: int    # 답변에 걸린 시간(초)
 
 
 class PostureSummaryResponse(BaseModel):

@@ -49,7 +49,30 @@ function stopTimer() {
 const MAX_QUESTIONS = 5;
 const questionCounter = document.querySelector(".chat-header span");
 
-// AI 말풍선을 채팅창에 추가
+// 첫 질문이나 다음 질문 대기할때 ... 애니메이션으로 타이핑 버블 삽입
+function showTypingBubble() {
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble ai";
+    bubble.id = "typing-bubble";
+    bubble.textContent = "· · ·";
+    chatMessages.appendChild(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    let dots = 0;
+    bubble._interval = setInterval(() => {
+        dots = (dots % 3) + 1;
+        bubble.textContent = "·".repeat(dots).split("").join(" ");
+    }, 500);
+}
+
+// 질문이 생성되면 타이핑 버블 삭제하고 질문 메시지 등장
+function removeTypingBubble() {
+    const bubble = document.getElementById("typing-bubble");
+    if (bubble) {
+        clearInterval(bubble._interval);
+        bubble.remove();
+    }
+}
+
 function addAIBubble(text) {
     const bubble = document.createElement("div");
     bubble.className = "chat-bubble ai";
@@ -117,6 +140,7 @@ async function submitAnswer() {
             bodyData.posture_safety_rate = mp.posture_safety_rate;
         }
 
+        showTypingBubble();
         const res = await authFetch("/api/v1/interview/answer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -125,12 +149,14 @@ async function submitAnswer() {
         if (!res) return;
 
         if (!res.ok) {
+            removeTypingBubble();
             addAIBubble("답변 제출에 실패했습니다. 다시 시도해주세요.");
             if (toggleBtn) toggleBtn.disabled = false;
             return;
         }
 
         const data = await res.json();
+        removeTypingBubble();
 
 if (data.is_finished) {
     isFinished = true;
@@ -227,7 +253,12 @@ const feedbackBtn = document.getElementById("feedback-btn");
 if (feedbackBtn) {
     feedbackBtn.addEventListener("click", async function () {
         feedbackBtn.disabled = true;
-        feedbackBtn.textContent = "피드백 생성 중...";
+
+        let dots = 0;
+        const loadingInterval = setInterval(() => {
+            dots = (dots % 3) + 1;
+            feedbackBtn.textContent = "피드백 생성 중" + ".".repeat(dots);
+        }, 500);
 
         try {
             const res = await authFetch("/api/v1/feedback/generate", {
@@ -240,6 +271,8 @@ if (feedbackBtn) {
             }
         } catch (e) {
             alert("피드백 생성 중 오류가 발생했습니다.");
+        } finally {
+            clearInterval(loadingInterval);
         }
 
         window.location.href = `/feedback?id=${sessionIdInput.value}`;
@@ -265,6 +298,7 @@ async function startInterview() {
     }
     const experienceYears = parseInt(localStorage.getItem("experience_years") ?? "0");
 
+    showTypingBubble();
     try {
         const res = await authFetch("/api/v1/interview/start", {
             method: "POST",
@@ -278,11 +312,13 @@ async function startInterview() {
         if (!res) return;
 
         if (!res.ok) {
+            removeTypingBubble();
             addAIBubble("면접을 시작할 수 없습니다. 페이지를 새로고침 해주세요.");
             return;
         }
 
         const data = await res.json();
+        removeTypingBubble();
         if (sessionIdInput) sessionIdInput.value = data.session_id;
         addAIBubble(data.intro_message);
         addAIBubble(data.question);

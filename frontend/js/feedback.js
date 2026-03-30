@@ -132,7 +132,7 @@ function renderFeedback(data) {
       </div>
       <div class="question-body">
         <div class="q-section">
-          <div class="q-section-label">내 답변</div>
+          <div class="q-section-label">내 답변 <span style="font-size:12px;color:#aaa;font-weight:normal;">${qf.duration_seconds ? `(${qf.duration_seconds}초)` : '(응답 기록 없음)'}</span></div>
           <div class="q-section-text answer">${escapeHtml(qf.answer_content || '(답변 없음)')}</div>
         </div>
         <div class="q-section">
