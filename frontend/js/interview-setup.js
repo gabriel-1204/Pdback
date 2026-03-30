@@ -144,11 +144,11 @@ startBtn.addEventListener('click', () => {
     return;
   }
   if (!isCameraAllowed) {
-    alert('카메라 권한을 허용해주세요.');
+    alert('카메라 권한을 허용한 후, 페이지를 새로고침 해주세요.');
     return;
   }
   if (!isMicAllowed) {
-    alert('마이크 권한을 허용해주세요.');
+    alert('마이크 권한을 허용한 후, 페이지를 새로고침 해주세요.');
     return;
   }
   try {
