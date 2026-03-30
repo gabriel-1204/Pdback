@@ -11,6 +11,7 @@ from app.domain.interview.prompt import (
     INTERVIEW_INTRO_MESSAGE,
     get_first_question_prompt,
     get_followup_prompt,
+    get_model_answer_prompt,
 )
 from app.domain.interview.schema import (
     AnswerRequest,
@@ -36,7 +37,7 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
         experience_years=request.experience_years)
 
     first_question = await ask_question(chat, get_first_question_prompt())
-
+    model_answer_first = await ask_question(chat, get_model_answer_prompt(first_question))
 
     # 3. 세션 id 발급, document 생성
     session_id = str(uuid.uuid4())
@@ -54,7 +55,7 @@ async def start_interview(request: InterviewStartRequest, user_id: str) -> Inter
                 category="기술",
                 expected_duration_seconds=60, # 시간 1분으로 정함
                 created_at=now,
-                model_answer="",      # 추후 Gemini로 모범답안 생성 가능
+                model_answer=model_answer_first,      # 추후 Gemini로 모범답안 생성 가능
                 question_keywords=[],
             )
         ],
@@ -170,7 +171,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         chat,
         get_followup_prompt(current_question, request.answer_content)
     )
-
+    model_answer_followup = await ask_question(chat, get_model_answer_prompt(follow_up_question))
 
     # 5. 꼬리질문을 새 Question으로 MongoDB에 저장
     new_question = Question(
@@ -179,7 +180,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
         category="기술",
         expected_duration_seconds=60, #시간 1분으로 정함
         created_at=now,
-        model_answer="",
+        model_answer=model_answer_followup,
         question_keywords=[],
     )
 
