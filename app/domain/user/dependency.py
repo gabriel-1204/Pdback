@@ -19,4 +19,8 @@ def get_current_user(cred: HTTPAuthorizationCredentials = Depends(bearer)):
     except (ExpiredSignatureError, InvalidTokenError):
         raise HTTPException(status_code=401, detail="유효하지 않은 토큰입니다.")
 
-    return payload["sub"]
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="토큰에 사용자 ID가 없습니다.")
+    
+    return user_id
