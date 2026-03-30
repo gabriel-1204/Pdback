@@ -110,7 +110,7 @@ async def submit_answer(request: AnswerRequest, user_id: str) -> AnswerResponse:
     if started_at.tzinfo is None:
         started_at = started_at.replace(tzinfo=timezone.utc).astimezone(KST)
     ended_at = now
-    duration_seconds = int((ended_at - started_at).total_seconds())
+    duration_seconds = request.duration_seconds if request.duration_seconds is not None else int((ended_at - started_at).total_seconds())
 
     answer = Answer(
         answer_content=request.answer_content,

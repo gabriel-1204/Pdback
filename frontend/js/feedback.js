@@ -77,12 +77,6 @@ function renderFeedback(data) {
     document.getElementById(id).style.height   = (ratio * BAR_MAX) + 'px';
     document.getElementById(valId).textContent = `${Math.round(score10 * 10)}% (${Number(score10).toFixed(1)})`;
   }
-  setScoreBar('bar-tech',    'bar-val-tech',    data.technical_score);
-  setScoreBar('bar-logic',   'bar-val-logic',   data.logic_score);
-  setScoreBar('bar-keyword', 'bar-val-keyword', data.keyword_score);
-  // 0~100 스케일
-  setBar('bar-eyes',    'bar-val-eyes',    Math.round(data.posture_summary.eyes_score),    100, '%');
-  setBar('bar-posture', 'bar-val-posture', Math.round(data.posture_summary.posture_score), 100, '%');
 
   // 종합 코멘트
   document.getElementById('interview-comment').textContent = data.interview_comment || '-';
@@ -148,7 +142,12 @@ function renderFeedback(data) {
     qContainer.appendChild(item);
   });
 
-  // 콘텐츠 표시
+  // 바 높이를 hidden 상태에서 먼저 세팅 → display:block 시 @keyframes bar-grow 발동
+  setScoreBar('bar-tech',    'bar-val-tech',    data.technical_score);
+  setScoreBar('bar-logic',   'bar-val-logic',   data.logic_score);
+  setScoreBar('bar-keyword', 'bar-val-keyword', data.keyword_score);
+  setBar('bar-eyes',    'bar-val-eyes',    Math.round(data.posture_summary.eyes_score),    100, '%');
+  setBar('bar-posture', 'bar-val-posture', Math.round(data.posture_summary.posture_score), 100, '%');
   document.getElementById('loading-state').style.display  = 'none';
   document.getElementById('feedback-content').style.display = 'block';
 }

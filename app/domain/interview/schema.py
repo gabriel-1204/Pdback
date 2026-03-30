@@ -28,6 +28,7 @@ class AnswerRequest(BaseModel):
     # AnswerRequest 클래스 안에 추가
     eye_contact: int | None = Field(default=None, ge=0, le=100)
     posture_safety_rate: int | None = Field(default=None, ge=0, le=100)
+    duration_seconds: int | None = None  # 프론트엔드에서 측정한 답변 시간 (답변 시작 ~ 완료 버튼)
 
 
 class AnswerResponse(BaseModel):

@@ -132,6 +132,7 @@ async function submitAnswer() {
         const bodyData = {
             session_id: sessionIdInput.value,
             answer_content: answerText,
+            duration_seconds: timerSeconds,
         };
         // 마지막 질문일 때 MediaPipe 태도 분석 데이터 포함
         if (questionNumber >= MAX_QUESTIONS && typeof getMediaPipeResults === "function") {
@@ -179,6 +180,8 @@ if (data.is_finished) {
             addAIBubble(data.follow_up_question);
             followUpCount++;
             updateQuestionCount();
+            timerSeconds = 0;
+            updateTimerDisplay();
             if (toggleBtn) toggleBtn.disabled = false;
         }
     } catch (e) {

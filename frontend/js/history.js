@@ -52,7 +52,8 @@ function renderTable(items) {
     const attitudeCls = scoreClass(item.posture_summary.attitude_score, 10);
     const avgCls      = scoreClass((item.interview_score + item.posture_summary.attitude_score) / 2, 10);
 
-    const isNew = (Date.now() - new Date(item.created_at).getTime()) < 10 * 60 * 1000;
+    const createdAt = item.created_at.endsWith('Z') ? item.created_at : item.created_at + 'Z';
+    const isNew = (Date.now() - new Date(createdAt).getTime()) < 30 * 60 * 1000;
     const newBadge = isNew ? '<span class="badge-new">NEW</span>' : '';
 
     const tr = document.createElement('tr');
@@ -80,8 +81,8 @@ function renderTrendChart(items) {
 
   const CHART_LIMIT = 5;
   const MAX_BAR_H = 110; // px
-  // 최신 5개 슬라이스 후 오래된 순(왼→오른)으로 정렬
-  const sorted = [...items].slice(0, CHART_LIMIT).reverse();
+  // 최신 5개 슬라이스 (최신순 왼→오른)
+  const sorted = [...items].slice(0, CHART_LIMIT);
 
   // 평균 점수(AI 종합 + 태도 ÷ 2) 계산 후 최고점 인덱스 찾기
   const scores = sorted.map(item =>
@@ -93,10 +94,9 @@ function renderTrendChart(items) {
   const barItems = [];
   for (let i = 0; i < CHART_LIMIT; i++) {
     if (i < sorted.length) {
-      const item    = sorted[i];
       const score   = scores[i];
       const h       = Math.max(4, Math.round((score / 10) * MAX_BAR_H));
-      const date    = new Date(item.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
+      const date    = new Date(sorted[i].created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
       const isBest  = sorted.length >= 2 && i === maxIdx;
       const barBg   = isBest
         ? 'linear-gradient(180deg,#ffa502,#ffd06b)'
@@ -105,7 +105,7 @@ function renderTrendChart(items) {
       barItems.push(`
         <div class="bar-item">
           <div class="bar-value" style="display:flex;flex-direction:column;align-items:center;gap:1px;">${crown}${score.toFixed(1)}</div>
-          <div class="bar" style="height:${h}px;background:${barBg};transition:height 0.6s ease;"></div>
+          <div class="bar" style="height:${h}px;background:${barBg};"></div>
           <div class="bar-label">${date}</div>
         </div>`);
     } else {
@@ -121,7 +121,7 @@ function renderTrendChart(items) {
   container.innerHTML = `
     <div style="width:100%;">
       <div class="bar-chart">${barItems.join('')}</div>
-      <p style="text-align:right;font-size:13px;color:#bbb;margin-top:6px;">최신순으로 5개 면접 데이터만 표시됩니다.</p>
+      <p style="text-align:right;font-size:13px;color:#bbb;margin-top:6px;">※ 왼쪽부터 최신순으로 5개 면접 데이터만 표시됩니다.</p>
     </div>`;
 }
 
