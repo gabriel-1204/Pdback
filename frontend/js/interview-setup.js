@@ -90,21 +90,9 @@ renderStackButtons('백엔드');
 // 6. 카메라/마이크 권한 요청
 // ========================================
 const permItems = document.querySelectorAll('.perm-item');
-const cameraStatus = permItems[0].querySelector('.perm-status');
 const micStatus = permItems[1].querySelector('.perm-status');
 
-let isCameraAllowed = false;
 let isMicAllowed = false;
-
-navigator.mediaDevices.getUserMedia({ video: true })
-  .then((stream) => {
-    isCameraAllowed = true;
-    cameraStatus.textContent = '✓ 허용됨';
-    stream.getTracks().forEach(track => track.stop());
-  })
-  .catch(() => {
-    cameraStatus.textContent = '✗ 거부됨';
-  });
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then((stream) => {
@@ -141,10 +129,6 @@ startBtn.addEventListener('click', () => {
   }
   if (micStatus.textContent === '확인 중...') {
     alert('마이크 권한 확인 중입니다. 잠시 후 다시 시도해주세요.');
-    return;
-  }
-  if (!isCameraAllowed) {
-    alert('카메라 권한을 허용한 후, 페이지를 새로고침 해주세요.');
     return;
   }
   if (!isMicAllowed) {
