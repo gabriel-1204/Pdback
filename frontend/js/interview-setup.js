@@ -91,8 +91,20 @@ renderStackButtons('백엔드');
 // ========================================
 const permItems = document.querySelectorAll('.perm-item');
 const micStatus = permItems[1].querySelector('.perm-status');
+const cameraStatus = permItems[0].querySelector('.perm-status');
 
 let isMicAllowed = false;
+let isCameraAllowed = false;
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then((stream) => {
+    isCameraAllowed = true;
+    cameraStatus.textContent = '✓ 허용됨';
+    stream.getTracks().forEach(track => track.stop());
+  })
+  .catch(() => {
+    cameraStatus.textContent = '✗ 거부됨';
+  });
 
 navigator.mediaDevices.getUserMedia({ audio: true })
   .then((stream) => {
@@ -128,8 +140,12 @@ startBtn.addEventListener('click', () => {
     return;
   }
   if (!isMicAllowed) {
-    alert('마이크 권한을 허용한 후, 페이지를 새로고침 해주세요.');
+    alert('마이크 권한은 필수입니다. 허용 후 페이지를 새로고침 해주세요.');
     return;
+  }
+  if (!isCameraAllowed) {
+    const proceed = confirm('카메라가 허용되지 않았습니다.\n카메라 없이 진행하면 태도 점수가 0점 처리될 수 있습니다.\n그래도 진행하시겠습니까?');
+    if (!proceed) return;
   }
   try {
     localStorage.setItem("job_role", jobRole);

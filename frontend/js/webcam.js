@@ -14,6 +14,9 @@ async function startWebcam() {
 }
 
 // 페이지 로드 시 자동 시작
-document.addEventListener("DOMContentLoaded", () => {
-    startWebcam();
+document.addEventListener("DOMContentLoaded", async () => {
+    const result = await navigator.permissions.query({ name: 'camera' });
+    if (result.state === 'granted') {
+        startWebcam();
+    }
 });
