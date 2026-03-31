@@ -3,6 +3,12 @@
 
       if (!localStorage.getItem('access_token')) { alert('로그인이 필요합니다.'); window.location.href = '/login'; return; }
 
+      window.addEventListener('pageshow', () => {
+        if (!localStorage.getItem('access_token')) {
+          window.location.href = '/login';
+        }
+      });
+
       async function loadUserInfo() {
         try {
           const response = await authFetch('/api/v1/auth/me');
