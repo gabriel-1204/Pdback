@@ -1,3 +1,21 @@
+
+// 로그인 체크
+if (!localStorage.getItem('access_token')) {
+  alert('로그인이 필요합니다.');
+  window.location.href = '/login';
+}
+
+// bfcache 비활성화 (뒤로가기 시 페이지 새로 로드되게 해서 로그인 체크 동작)
+window.addEventListener('unload', () => {});
+
+// 뒤로가기 체크(로그아웃 후 뒤로가기 했을 때 alert+리다이렉트)
+window.addEventListener('pageshow', () => {
+  if (!localStorage.getItem('access_token')) {
+    alert('로그인이 필요합니다.');
+    window.location.href = '/login';
+  }
+});
+
 const API_BASE = '/api/v1';
 
 // ── 유틸 (getToken, scoreClass, escapeHtml → utils.js) ──────────────

@@ -4,6 +4,14 @@ if (!localStorage.getItem('access_token')) {
     window.location.href = '/login';
 }
 
+// 뒤로가기 체크(로그아웃 후 뒤로가기 했을 때 alert+리다이렉트)
+window.addEventListener('pageshow', () => {
+  if (!localStorage.getItem('access_token')) {
+    alert('로그인이 필요합니다.');
+    window.location.href = '/login';
+  }
+});
+
 // ========================================
 // 1. 직무별 기술 스택 목록
 // ========================================
