@@ -4,7 +4,7 @@ from google.genai import types
 from google.genai.chats import AsyncChat
 
 from app.config import settings
-from app.domain.interview.prompt2 import build_system_prompt
+from app.domain.interview.prompt import build_system_prompt
 
 # 클라이언트를 모듈 레벨에서 한 번만 생성 (함수 끝나도 안 닫힘)
 # genai.Client거나 클라이언트가 없으면None(아직생성안됨) / 처음은 None으로 시작
