@@ -7,7 +7,7 @@ from google.genai import types
 from app.config import KST
 from app.database import get_database
 from app.domain.interview.models import Answer, InterviewDocument, Question
-from app.domain.interview.prompt2 import (
+from app.domain.interview.prompt import (
     INTERVIEW_INTRO_MESSAGE,
     get_first_question_prompt,
     get_followup_prompt,
